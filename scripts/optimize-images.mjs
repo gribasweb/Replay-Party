@@ -9,7 +9,9 @@ const OUT = path.resolve(process.cwd(), "public");
 
 const jobs = [
   { in: "FUNDO.png", out: "fundo.webp" },
+  { in: "FUNDO celular.png", out: "fundo-celular.webp" },
   { in: "DJ SEM FUNDO.png", out: "dj.webp" },
+  { in: "DJ SEM FUNDO celular.png", out: "dj-celular.webp" },
   { in: "logo evento.png", out: "logo.webp" },
 ];
 

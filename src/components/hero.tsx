@@ -24,7 +24,8 @@ export function Hero() {
     <section id="inicio" ref={ref} className="relative min-h-[100dvh] overflow-hidden bg-ink">
       {/* Layer 1 — background photo (already color-graded by the client) */}
       <motion.div style={{ y }} className="absolute inset-0 z-0">
-        <Image src="/fundo.webp" alt="" fill priority sizes="100vw" className="object-cover object-[center_60%]" />
+        <Image src="/fundo.webp" alt="" fill priority sizes="100vw" className="hidden object-cover object-[center_60%] md:block" />
+        <Image src="/fundo-celular.webp" alt="" fill priority sizes="100vw" className="object-cover object-center md:hidden" />
       </motion.div>
 
       {/* Darken top + bottom for text legibility, keep the middle clear */}
@@ -44,7 +45,8 @@ export function Hero() {
 
       {/* Layer 3 — DJ cut-out, aligned with the background */}
       <motion.div style={{ y }} className="absolute inset-0 z-20">
-        <Image src="/dj.webp" alt="DJ no palco" fill priority sizes="100vw" className="object-cover object-[center_60%]" />
+        <Image src="/dj.webp" alt="DJ no palco" fill priority sizes="100vw" className="hidden object-cover object-[center_60%] md:block" />
+        <Image src="/dj-celular.webp" alt="DJ no palco" fill priority sizes="100vw" className="object-cover object-center md:hidden" />
       </motion.div>
 
       {/* Layer 4 — band in front of the DJ (crosses the first to form an X) */}
