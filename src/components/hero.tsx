@@ -20,13 +20,6 @@ export function Hero() {
   useEffect(() => setMounted(true), []);
   const y = mounted ? sceneY : "0%";
 
-  // Ajuste das faixas no mobile. Abra o site com ?tune para ver o painel.
-  const [tune, setTune] = useState({ topBack: 57, rotBack: -11, topFront: 57, rotFront: 11 });
-  const [showTuner, setShowTuner] = useState(false);
-  useEffect(() => {
-    if (new URLSearchParams(window.location.search).has("tune")) setShowTuner(true);
-  }, []);
-
   return (
     <section id="inicio" ref={ref} className="relative min-h-[100dvh] overflow-hidden bg-ink">
       {/* Layer 1 — background photo (already color-graded by the client) */}
@@ -51,7 +44,7 @@ export function Hero() {
           <DiagonalBand text="Replay Party" rotate={-11} top="57%" tone="violet" durationSec={26} />
         </div>
         <div className="md:hidden">
-          <DiagonalBand text="Replay Party" rotate={tune.rotBack} top={`${tune.topBack}%`} tone="violet" durationSec={26} />
+          <DiagonalBand text="Replay Party" rotate={-10} top="42%" tone="violet" durationSec={26} />
         </div>
       </div>
 
@@ -67,7 +60,7 @@ export function Hero() {
           <DiagonalBand text="Garanta seu ingresso" rotate={11} top="57%" tone="magenta" reverse durationSec={22} />
         </div>
         <div className="md:hidden">
-          <DiagonalBand text="Garanta seu ingresso" rotate={tune.rotFront} top={`${tune.topFront}%`} tone="magenta" reverse durationSec={22} />
+          <DiagonalBand text="Garanta seu ingresso" rotate={10} top="42%" tone="magenta" reverse durationSec={22} />
         </div>
       </div>
 
@@ -115,55 +108,6 @@ export function Hero() {
           </div>
         </motion.div>
       </div>
-
-      {showTuner && (
-        <div className="fixed inset-x-0 bottom-0 z-[100] space-y-2 border-t-2 border-magenta bg-ink/95 p-4 text-chalk backdrop-blur md:hidden">
-          <p className="font-mono text-[11px] tracking-widest text-magenta uppercase">Ajuste das faixas (mobile)</p>
-          <TuneRow label="Atrás · posição" value={tune.topBack} min={0} max={100} suffix="%" onChange={(v) => setTune((t) => ({ ...t, topBack: v }))} />
-          <TuneRow label="Atrás · rotação" value={tune.rotBack} min={-40} max={40} suffix="°" onChange={(v) => setTune((t) => ({ ...t, rotBack: v }))} />
-          <TuneRow label="Frente · posição" value={tune.topFront} min={0} max={100} suffix="%" onChange={(v) => setTune((t) => ({ ...t, topFront: v }))} />
-          <TuneRow label="Frente · rotação" value={tune.rotFront} min={-40} max={40} suffix="°" onChange={(v) => setTune((t) => ({ ...t, rotFront: v }))} />
-          <p className="mt-1 rounded bg-coal p-2 text-center font-mono text-[11px] text-violet">
-            ATRÁS top {tune.topBack}% rot {tune.rotBack}° · FRENTE top {tune.topFront}% rot {tune.rotFront}°
-          </p>
-        </div>
-      )}
     </section>
-  );
-}
-
-function TuneRow({
-  label,
-  value,
-  min,
-  max,
-  suffix,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  suffix: string;
-  onChange: (v: number) => void;
-}) {
-  return (
-    <label className="block">
-      <span className="flex justify-between font-mono text-[10px] text-ash uppercase">
-        <span>{label}</span>
-        <span className="text-chalk">
-          {value}
-          {suffix}
-        </span>
-      </span>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full accent-magenta"
-      />
-    </label>
   );
 }
