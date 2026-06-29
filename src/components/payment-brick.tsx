@@ -129,7 +129,20 @@ export function PaymentBrick({ orderId, amount, email }: { orderId: string; amou
             bankTransfer: "all",
             maxInstallments: 12,
           },
-          visual: { style: { theme: "dark" } },
+          visual: {
+            // Os campos seguros (iframes PCI) sempre têm fundo branco e não
+            // respeitam inputBackgroundColor. Por isso usamos o tema claro
+            // padrão (tudo legível: fundo claro + texto escuro), com a cor da
+            // marca no botão. Fica num "cartão" claro dentro da página escura.
+            style: {
+              theme: "default",
+              customVariables: {
+                baseColor: "#f90a79",
+                borderRadiusSmall: "4px",
+                borderRadiusMedium: "6px",
+              },
+            },
+          },
         }}
         onSubmit={onSubmit}
         onError={(e) => console.error("brick error", e)}
