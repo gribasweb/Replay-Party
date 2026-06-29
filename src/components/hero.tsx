@@ -1,9 +1,10 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform } from "motion/react";
-import { ArrowRight, CalendarBlank, GridFour, MapPin } from "@phosphor-icons/react";
+import { ArrowRight, CalendarBlank, GridFour, MapPin, Ticket } from "@phosphor-icons/react";
 import { EVENT } from "@/lib/event";
 import { DiagonalBand } from "@/components/diagonal-band";
 
@@ -97,14 +98,23 @@ export function Hero() {
               Comprar ingresso
               <ArrowRight weight="bold" className="h-5 w-5 transition-transform group-hover:translate-x-1" />
             </a>
+            {/* Desktop/tablet: Ver setores. Mobile: Meus ingressos (no header fica oculto) */}
             <a
               href="#ingressos"
-              className="flex items-center gap-2 border border-chalk/40 bg-ink/30 px-7 py-4 text-sm font-bold tracking-wide text-chalk uppercase backdrop-blur-sm transition-colors hover:border-chalk hover:bg-chalk/10"
+              className="hidden items-center gap-2 border border-chalk/40 bg-ink/30 px-7 py-4 text-sm font-bold tracking-wide text-chalk uppercase backdrop-blur-sm transition-colors hover:border-chalk hover:bg-chalk/10 sm:flex"
               style={{ borderRadius: "var(--radius-stamp)" }}
             >
               <GridFour weight="bold" className="h-5 w-5" />
               Ver setores
             </a>
+            <Link
+              href="/meus-ingressos"
+              className="flex items-center gap-2 border border-chalk/40 bg-ink/30 px-7 py-4 text-sm font-bold tracking-wide text-chalk uppercase backdrop-blur-sm transition-colors hover:border-chalk hover:bg-chalk/10 sm:hidden"
+              style={{ borderRadius: "var(--radius-stamp)" }}
+            >
+              <Ticket weight="bold" className="h-5 w-5" />
+              Meus ingressos
+            </Link>
           </div>
         </motion.div>
       </div>
