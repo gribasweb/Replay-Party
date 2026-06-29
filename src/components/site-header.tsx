@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
 import { List, Ticket, X } from "@phosphor-icons/react";
 
@@ -50,6 +51,13 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <Link
+            href="/meus-ingressos"
+            className="hidden border border-grape px-5 py-2.5 text-sm font-bold tracking-wide text-chalk uppercase transition-colors hover:border-magenta hover:text-magenta sm:inline-block"
+            style={{ borderRadius: "var(--radius-stamp)" }}
+          >
+            Meus ingressos
+          </Link>
           <a
             href="#ingressos"
             className="hidden bg-magenta px-5 py-2.5 text-sm font-bold tracking-wide text-ink uppercase transition-transform hover:-translate-y-0.5 active:translate-y-0 sm:inline-block"
@@ -112,6 +120,14 @@ export function SiteHeader() {
               >
                 Comprar ingresso
               </a>
+              <Link
+                href="/meus-ingressos"
+                onClick={() => setOpen(false)}
+                className="mt-3 border border-grape px-6 py-4 text-center text-base font-bold tracking-wide text-chalk uppercase"
+                style={{ borderRadius: "var(--radius-stamp)" }}
+              >
+                Meus ingressos
+              </Link>
             </nav>
           </motion.div>
         )}

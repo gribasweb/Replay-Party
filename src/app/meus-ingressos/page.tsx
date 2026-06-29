@@ -157,6 +157,15 @@ export default function MeusIngressosPage() {
             )}
           </div>
         )}
+
+        <div className="mt-14 border-t border-grape/40 pt-6 text-center">
+          <Link
+            href="/checkin"
+            className="font-mono text-[11px] tracking-widest text-ash/70 uppercase transition-colors hover:text-magenta"
+          >
+            Acesso da equipe · Portaria →
+          </Link>
+        </div>
       </div>
     </main>
   );
