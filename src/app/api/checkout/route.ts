@@ -41,6 +41,19 @@ export async function POST(req: Request) {
     }
   }
 
+  // Só o lote dentro da janela de datas pode ser comprado (impede comprar um
+  // lote já encerrado pelo preço antigo, ou um lote futuro antes da hora).
+  const now = new Date();
+  for (const item of items) {
+    const lot = lotMap.get(item.lotId)!;
+    if ((lot.startsAt && lot.startsAt > now) || (lot.endsAt && lot.endsAt < now)) {
+      return NextResponse.json(
+        { error: `O ${lot.label} não está disponível no momento.` },
+        { status: 400 },
+      );
+    }
+  }
+
   // One slot per ticket, in participant order.
   const slots = items.flatMap((item) =>
     Array.from({ length: item.quantity }, () => lotMap.get(item.lotId)!),

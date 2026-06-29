@@ -3,7 +3,7 @@
 import { type MouseEvent } from "react";
 import { motion, useMotionValue, useSpring } from "motion/react";
 import { Check, Crown, Info, MusicNotes, Ticket, type Icon } from "@phosphor-icons/react";
-import { brl, TICKETS, type TicketTier } from "@/lib/event";
+import { brl, type TicketTier } from "@/lib/event";
 import { Reveal } from "@/components/reveal";
 
 const ACCENT = {
@@ -128,7 +128,7 @@ function TicketCard({ tier, index, maxPerks }: { tier: TicketTier; index: number
                   </a>
                 ) : (
                   <span className="font-mono text-[11px] tracking-widest text-ash uppercase">
-                    Em breve
+                    {lot.status === "past" ? "Encerrado" : "Em breve"}
                   </span>
                 )}
               </div>
@@ -149,8 +149,8 @@ function TicketCard({ tier, index, maxPerks }: { tier: TicketTier; index: number
   );
 }
 
-export function Tickets() {
-  const maxPerks = Math.max(...TICKETS.map((t) => t.perks.length));
+export function Tickets({ tiers }: { tiers: TicketTier[] }) {
+  const maxPerks = Math.max(...tiers.map((t) => t.perks.length));
   return (
     <section id="ingressos" className="relative scroll-mt-20 bg-ink py-20 lg:py-28">
       <div className="bg-grid absolute inset-0 opacity-60" aria-hidden />
@@ -168,14 +168,14 @@ export function Tickets() {
             <div className="flex items-center gap-2 self-start border border-grape bg-plum px-4 py-2 sm:self-auto" style={{ borderRadius: "var(--radius-stamp)" }}>
               <Info weight="bold" className="h-4 w-4 text-violet" />
               <span className="font-mono text-[11px] tracking-wider text-ash uppercase">
-                {TICKETS[0].perLotStock} ingressos por lote
+                {tiers[0].perLotStock} ingressos por lote
               </span>
             </div>
           </div>
         </Reveal>
 
         <div className="mt-12 grid gap-6 lg:grid-cols-2 lg:gap-8">
-          {TICKETS.map((tier, i) => (
+          {tiers.map((tier, i) => (
             <TicketCard key={tier.id} tier={tier} index={i} maxPerks={maxPerks} />
           ))}
         </div>
