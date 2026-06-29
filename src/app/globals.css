@@ -177,3 +177,24 @@
     animation: none !important;
   }
 }
+
+/* Linha de leitura do código de barras (aparece no hover do card de ingresso) */
+@keyframes scanmove {
+  0% {
+    left: 0%;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    left: calc(100% - 3px);
+    opacity: 0;
+  }
+}
+.group:hover .scan-line {
+  animation: scanmove 1.4s ease-in-out infinite;
+}

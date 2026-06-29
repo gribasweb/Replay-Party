@@ -2,12 +2,14 @@ import Link from "next/link";
 import Image from "next/image";
 import QRCode from "qrcode";
 import { eq } from "drizzle-orm";
-import { CheckCircle, CalendarBlank, MapPin } from "@phosphor-icons/react/dist/ssr";
+import { CalendarBlank, MapPin } from "@phosphor-icons/react/dist/ssr";
 import { db } from "@/lib/db";
 import { orders, tickets } from "@/lib/db/schema";
 import { EVENT, brl } from "@/lib/event";
 import { onlyDigits } from "@/lib/cpf";
 import { baseUrlFromHeaders } from "@/lib/base-url";
+import { SuccessCelebration } from "@/components/success-celebration";
+import { TicketReveal } from "@/components/ticket-reveal";
 
 export const dynamic = "force-dynamic";
 
@@ -59,16 +61,8 @@ export default async function PedidoPage({ params }: { params: Promise<{ id: str
   return (
     <main className="min-h-[100dvh] bg-ink py-12">
       <div className="mx-auto max-w-2xl px-5">
-        {/* Sucesso */}
-        <div className="text-center">
-          <CheckCircle weight="fill" className="mx-auto h-14 w-14 text-violet" />
-          <h1 className="mt-4 font-display text-4xl text-chalk uppercase sm:text-5xl">
-            Ingresso{ticketsWithQr.length > 1 ? "s" : ""} gerado{ticketsWithQr.length > 1 ? "s" : ""}!
-          </h1>
-          <p className="mt-3 text-ash">
-            Apresente o QR Code na entrada. Guarde esta página ou tire um print.
-          </p>
-        </div>
+        {/* Sucesso (confete + carimbo CONFIRMADO) */}
+        <SuccessCelebration count={ticketsWithQr.length} />
 
         {/* Resumo do evento */}
         <div className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 border-y border-grape/50 py-4 font-mono text-sm text-chalk">
@@ -86,7 +80,8 @@ export default async function PedidoPage({ params }: { params: Promise<{ id: str
         {/* Ingressos */}
         <div className="mt-8 space-y-6">
           {ticketsWithQr.map((t, i) => (
-            <article key={t.id} className="overflow-hidden border border-grape bg-plum" style={{ borderRadius: "var(--radius-stamp)" }}>
+            <TicketReveal key={t.id} index={i}>
+              <article className="overflow-hidden border border-grape bg-plum" style={{ borderRadius: "var(--radius-stamp)" }}>
               <div className="flex items-center justify-between bg-gradient-to-r from-grape/60 to-plum px-5 py-3">
                 <span className="font-display text-2xl text-chalk uppercase">{t.tierName}</span>
                 <span className="font-mono text-[11px] tracking-widest text-ash uppercase">
@@ -107,7 +102,8 @@ export default async function PedidoPage({ params }: { params: Promise<{ id: str
                 </div>
               </div>
               <div className="barcode h-7 opacity-70" aria-hidden />
-            </article>
+              </article>
+            </TicketReveal>
           ))}
         </div>
 

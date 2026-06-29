@@ -1,5 +1,7 @@
 "use client";
 
+import { type MouseEvent } from "react";
+import { motion, useMotionValue, useSpring } from "motion/react";
 import { Check, Crown, Info, MusicNotes, Ticket, type Icon } from "@phosphor-icons/react";
 import { brl, TICKETS, type TicketTier } from "@/lib/event";
 import { Reveal } from "@/components/reveal";
@@ -31,12 +33,33 @@ function TicketCard({ tier, index }: { tier: TicketTier; index: number }) {
   const a = ACCENT[tier.accent];
   const TierIcon = a.icon;
 
+  // Inclinação 3D sutil seguindo o cursor (desktop).
+  const rotateX = useMotionValue(0);
+  const rotateY = useMotionValue(0);
+  const rx = useSpring(rotateX, { stiffness: 150, damping: 18 });
+  const ry = useSpring(rotateY, { stiffness: 150, damping: 18 });
+  const onMove = (e: MouseEvent<HTMLElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    rotateY.set(((e.clientX - r.left) / r.width - 0.5) * 6);
+    rotateX.set(-((e.clientY - r.top) / r.height - 0.5) * 6);
+  };
+  const onLeave = () => {
+    rotateX.set(0);
+    rotateY.set(0);
+  };
+
   return (
     <Reveal delay={index * 0.12}>
-      <article
-        className={`relative flex h-full flex-col border bg-plum transition-all duration-300 ${a.border} ${a.hover}`}
-        style={{ borderRadius: "var(--radius-stamp)" }}
+      <motion.article
+        onMouseMove={onMove}
+        onMouseLeave={onLeave}
+        style={{ rotateX: rx, rotateY: ry, transformPerspective: 1000, borderRadius: "var(--radius-stamp)" }}
+        className={`group relative flex h-full flex-col border bg-plum transition-colors duration-300 ${a.border} ${a.hover}`}
       >
+        {/* Brilho cruzando no hover */}
+        <span aria-hidden className="pointer-events-none absolute inset-0 z-20 overflow-hidden" style={{ borderRadius: "var(--radius-stamp)" }}>
+          <span className="absolute -left-[75%] top-0 h-full w-2/3 -skew-x-[20deg] bg-gradient-to-r from-transparent via-chalk/15 to-transparent opacity-0 transition-all duration-700 ease-out group-hover:left-[120%] group-hover:opacity-100" />
+        </span>
         {/* Upper body: tier identity + perks */}
         <div className="p-6 lg:p-8">
           <div className="flex items-center justify-between gap-3">
@@ -106,12 +129,15 @@ function TicketCard({ tier, index }: { tier: TicketTier; index: number }) {
           })}
         </div>
 
-        {/* Stub footer */}
+        {/* Stub footer — barcode com linha de leitura no hover */}
         <div className="flex items-center justify-between gap-4 border-t border-grape/50 px-6 py-4 lg:px-8">
-          <div className="h-7 flex-1 barcode opacity-70" aria-hidden />
+          <div className="relative h-7 flex-1 overflow-hidden">
+            <div className="h-full barcode opacity-70" aria-hidden />
+            <span aria-hidden className="scan-line absolute inset-y-0 left-0 w-[3px] bg-magenta opacity-0 shadow-[0_0_10px_2px_rgba(249,10,121,0.7)]" />
+          </div>
           <span className="font-mono text-[10px] tracking-[0.3em] text-ash uppercase">Admit One</span>
         </div>
-      </article>
+      </motion.article>
     </Reveal>
   );
 }

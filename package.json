@@ -11,6 +11,8 @@
   "dependencies": {
     "@mercadopago/sdk-react": "^1.0.7",
     "@phosphor-icons/react": "^2.1.10",
+    "@types/canvas-confetti": "^1.9.0",
+    "canvas-confetti": "^1.9.4",
     "drizzle-orm": "^0.45.2",
     "gsap": "^3.15.0",
     "html5-qrcode": "^2.3.8",
