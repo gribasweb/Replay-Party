@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Minus, Plus, Ticket, UserCheck } from "@phosphor-icons/react";
 import { brl } from "@/lib/event";
 import { formatCPF, formatPhone, isValidCPF, onlyDigits } from "@/lib/cpf";
+import { PaymentBrick } from "@/components/payment-brick";
 
 interface LotInfo {
   id: string;
@@ -24,10 +24,10 @@ const MAX_QTY = 10;
 const emailOk = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
 export function CheckoutForm({ lot }: { lot: LotInfo }) {
-  const router = useRouter();
+  const [step, setStep] = useState<"form" | "payment">("form");
+  const [orderId, setOrderId] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [buyer, setBuyer] = useState({ name: "", cpf: "", email: "", whatsapp: "" });
-  // Only the EXTRA attendees (ingressos 2, 3...). The buyer is always ticket 1.
   const [extras, setExtras] = useState<Person[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState("");
@@ -66,12 +66,11 @@ export function CheckoutForm({ lot }: { lot: LotInfo }) {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = async () => {
+  const goToPayment = async () => {
     setServerError("");
     if (!validate()) return;
     setSubmitting(true);
     try {
-      // Ticket 1 = buyer; the rest are the extra attendees.
       const participants = [{ name: buyer.name, cpf: buyer.cpf }, ...extras];
       const res = await fetch("/api/checkout", {
         method: "POST",
@@ -80,10 +79,12 @@ export function CheckoutForm({ lot }: { lot: LotInfo }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setServerError(data.error ?? "Não foi possível gerar o ingresso.");
+        setServerError(data.error ?? "Não foi possível continuar.");
         return;
       }
-      router.push(`/pedido/${data.orderId}`);
+      setOrderId(data.orderId);
+      setStep("payment");
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {
       setServerError("Erro de conexão. Tente novamente.");
     } finally {
@@ -106,9 +107,11 @@ export function CheckoutForm({ lot }: { lot: LotInfo }) {
       </header>
 
       <div className="mx-auto max-w-3xl px-5 py-10">
-        <h1 className="font-display text-4xl text-chalk uppercase sm:text-5xl">Finalizar compra</h1>
+        <h1 className="font-display text-4xl text-chalk uppercase sm:text-5xl">
+          {step === "form" ? "Finalizar compra" : "Pagamento"}
+        </h1>
 
-        {/* Resumo + quantidade */}
+        {/* Resumo */}
         <section className="mt-8 border border-grape bg-plum p-5" style={{ borderRadius: "var(--radius-stamp)" }}>
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -116,19 +119,23 @@ export function CheckoutForm({ lot }: { lot: LotInfo }) {
                 <Ticket weight="fill" className="h-6 w-6" />
               </span>
               <div>
-                <div className="font-display text-2xl leading-none text-chalk uppercase">{lot.tierName}</div>
+                <div className="font-display text-2xl leading-none text-chalk uppercase">
+                  {quantity}x {lot.tierName}
+                </div>
                 <div className="font-mono text-[11px] tracking-wider text-ash uppercase">{lot.label} · {brl(lot.priceCents / 100)} cada</div>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <button type="button" onClick={() => changeQuantity(quantity - 1)} aria-label="Menos" className="grid h-9 w-9 place-items-center border border-grape text-chalk hover:border-magenta" style={{ borderRadius: "var(--radius-stamp)" }}>
-                <Minus weight="bold" className="h-4 w-4" />
-              </button>
-              <span className="w-6 text-center font-display text-2xl text-chalk">{quantity}</span>
-              <button type="button" onClick={() => changeQuantity(quantity + 1)} aria-label="Mais" className="grid h-9 w-9 place-items-center border border-grape text-chalk hover:border-magenta" style={{ borderRadius: "var(--radius-stamp)" }}>
-                <Plus weight="bold" className="h-4 w-4" />
-              </button>
-            </div>
+            {step === "form" && (
+              <div className="flex items-center gap-3">
+                <button type="button" onClick={() => changeQuantity(quantity - 1)} aria-label="Menos" className="grid h-9 w-9 place-items-center border border-grape text-chalk hover:border-magenta" style={{ borderRadius: "var(--radius-stamp)" }}>
+                  <Minus weight="bold" className="h-4 w-4" />
+                </button>
+                <span className="w-6 text-center font-display text-2xl text-chalk">{quantity}</span>
+                <button type="button" onClick={() => changeQuantity(quantity + 1)} aria-label="Mais" className="grid h-9 w-9 place-items-center border border-grape text-chalk hover:border-magenta" style={{ borderRadius: "var(--radius-stamp)" }}>
+                  <Plus weight="bold" className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </div>
           <div className="mt-4 flex items-center justify-between border-t border-grape/50 pt-4">
             <span className="text-ash">Total</span>
@@ -136,66 +143,79 @@ export function CheckoutForm({ lot }: { lot: LotInfo }) {
           </div>
         </section>
 
-        {/* Comprador = Ingresso 1 */}
-        <section className="mt-8">
-          <h2 className="font-mono text-xs tracking-widest text-violet uppercase">Seus dados</h2>
-          <p className="mt-1 flex items-center gap-2 text-xs text-ash">
-            <UserCheck weight="bold" className="h-4 w-4 text-violet" />
-            Estes dados também valem como o <strong className="text-chalk">seu ingresso</strong> (nominal).
-          </p>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2">
-              <Field label="Nome completo" value={buyer.name} onChange={(v) => setBuyer({ ...buyer, name: v })} error={errors["buyer.name"]} placeholder="Seu nome" />
-            </div>
-            <Field label="CPF" value={buyer.cpf} onChange={(v) => setBuyer({ ...buyer, cpf: formatCPF(v) })} error={errors["buyer.cpf"]} placeholder="000.000.000-00" inputMode="numeric" maxLength={14} />
-            <Field label="WhatsApp" value={buyer.whatsapp} onChange={(v) => setBuyer({ ...buyer, whatsapp: formatPhone(v) })} error={errors["buyer.whatsapp"]} placeholder="(19) 99999-9999" inputMode="tel" maxLength={15} />
-            <div className="sm:col-span-2">
-              <Field label="E-mail" value={buyer.email} onChange={(v) => setBuyer({ ...buyer, email: v })} error={errors["buyer.email"]} placeholder="voce@email.com" type="email" inputMode="email" />
-            </div>
-          </div>
-        </section>
-
-        {/* Demais ingressos (só aparece se comprar para mais pessoas) */}
-        {quantity > 1 && (
-          <section className="mt-8">
-            <h2 className="font-mono text-xs tracking-widest text-violet uppercase">
-              Outras pessoas ({quantity - 1} {quantity - 1 === 1 ? "ingresso" : "ingressos"})
-            </h2>
-            <p className="mt-1 text-xs text-ash">Preencha os dados de quem vai usar os outros ingressos.</p>
-
-            <div className="mt-4 space-y-4">
-              {extras.map((p, i) => (
-                <div key={i} className="border border-grape/60 bg-coal p-4" style={{ borderRadius: "var(--radius-stamp)" }}>
-                  <div className="mb-3 font-display text-lg text-chalk uppercase">Ingresso {i + 2}</div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <Field label="Nome do participante" value={p.name} onChange={(v) => setExtra(i, "name", v)} error={errors[`x.${i}.name`]} placeholder="Nome completo" />
-                    <Field label="CPF" value={p.cpf} onChange={(v) => setExtra(i, "cpf", v)} error={errors[`x.${i}.cpf`]} placeholder="000.000.000-00" inputMode="numeric" maxLength={14} />
-                  </div>
+        {step === "form" ? (
+          <>
+            {/* Comprador = Ingresso 1 */}
+            <section className="mt-8">
+              <h2 className="font-mono text-xs tracking-widest text-violet uppercase">Seus dados</h2>
+              <p className="mt-1 flex items-center gap-2 text-xs text-ash">
+                <UserCheck weight="bold" className="h-4 w-4 text-violet" />
+                Estes dados também valem como o <strong className="text-chalk">seu ingresso</strong> (nominal).
+              </p>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <Field label="Nome completo" value={buyer.name} onChange={(v) => setBuyer({ ...buyer, name: v })} error={errors["buyer.name"]} placeholder="Seu nome" />
                 </div>
-              ))}
-            </div>
+                <Field label="CPF" value={buyer.cpf} onChange={(v) => setBuyer({ ...buyer, cpf: formatCPF(v) })} error={errors["buyer.cpf"]} placeholder="000.000.000-00" inputMode="numeric" maxLength={14} />
+                <Field label="WhatsApp" value={buyer.whatsapp} onChange={(v) => setBuyer({ ...buyer, whatsapp: formatPhone(v) })} error={errors["buyer.whatsapp"]} placeholder="(19) 99999-9999" inputMode="tel" maxLength={15} />
+                <div className="sm:col-span-2">
+                  <Field label="E-mail" value={buyer.email} onChange={(v) => setBuyer({ ...buyer, email: v })} error={errors["buyer.email"]} placeholder="voce@email.com" type="email" inputMode="email" />
+                </div>
+              </div>
+            </section>
+
+            {quantity > 1 && (
+              <section className="mt-8">
+                <h2 className="font-mono text-xs tracking-widest text-violet uppercase">
+                  Outras pessoas ({quantity - 1} {quantity - 1 === 1 ? "ingresso" : "ingressos"})
+                </h2>
+                <p className="mt-1 text-xs text-ash">Preencha os dados de quem vai usar os outros ingressos.</p>
+                <div className="mt-4 space-y-4">
+                  {extras.map((p, i) => (
+                    <div key={i} className="border border-grape/60 bg-coal p-4" style={{ borderRadius: "var(--radius-stamp)" }}>
+                      <div className="mb-3 font-display text-lg text-chalk uppercase">Ingresso {i + 2}</div>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <Field label="Nome do participante" value={p.name} onChange={(v) => setExtra(i, "name", v)} error={errors[`x.${i}.name`]} placeholder="Nome completo" />
+                        <Field label="CPF" value={p.cpf} onChange={(v) => setExtra(i, "cpf", v)} error={errors[`x.${i}.cpf`]} placeholder="000.000.000-00" inputMode="numeric" maxLength={14} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {serverError && (
+              <p className="mt-6 border border-magenta/50 bg-magenta/10 px-4 py-3 text-sm text-chalk" style={{ borderRadius: "var(--radius-stamp)" }}>
+                {serverError}
+              </p>
+            )}
+
+            <button
+              type="button"
+              onClick={goToPayment}
+              disabled={submitting}
+              className="glow-magenta mt-8 flex w-full items-center justify-center gap-2 bg-magenta px-7 py-4 text-sm font-bold tracking-wide text-ink uppercase transition-transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60"
+              style={{ borderRadius: "var(--radius-stamp)" }}
+            >
+              {submitting ? "Aguarde..." : "Ir para o pagamento"}
+              {!submitting && <ArrowRight weight="bold" className="h-5 w-5" />}
+            </button>
+            <p className="mt-3 text-center text-xs text-ash">
+              Na próxima etapa você paga com Pix ou cartão. Os ingressos são liberados após a confirmação.
+            </p>
+          </>
+        ) : (
+          <section className="mt-8">
+            <PaymentBrick orderId={orderId} amount={totalCents / 100} email={buyer.email} />
+            <button
+              type="button"
+              onClick={() => setStep("form")}
+              className="mx-auto mt-6 block text-center text-sm text-ash hover:text-chalk"
+            >
+              Voltar e editar os dados
+            </button>
           </section>
         )}
-
-        {serverError && (
-          <p className="mt-6 border border-magenta/50 bg-magenta/10 px-4 py-3 text-sm text-chalk" style={{ borderRadius: "var(--radius-stamp)" }}>
-            {serverError}
-          </p>
-        )}
-
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={submitting}
-          className="glow-magenta mt-8 flex w-full items-center justify-center gap-2 bg-magenta px-7 py-4 text-sm font-bold tracking-wide text-ink uppercase transition-transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60"
-          style={{ borderRadius: "var(--radius-stamp)" }}
-        >
-          {submitting ? "Gerando..." : quantity > 1 ? "Gerar meus ingressos" : "Gerar meu ingresso"}
-          {!submitting && <ArrowRight weight="bold" className="h-5 w-5" />}
-        </button>
-        <p className="mt-3 text-center text-xs text-ash">
-          Pagamento via Pix e cartão será habilitado em breve. Por enquanto, o ingresso é gerado direto para teste.
-        </p>
       </div>
     </main>
   );

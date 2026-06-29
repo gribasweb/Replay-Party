@@ -4,7 +4,6 @@ import { and, eq, gt, inArray, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { lots, orders, tickets } from "@/lib/db/schema";
 import { checkoutSchema } from "@/lib/checkout-schema";
-import { sendTicketEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -92,9 +91,8 @@ export async function POST(req: Request) {
           buyerEmail: buyer.email,
           buyerWhatsapp: buyer.whatsapp,
           totalCents,
-          status: "paid",
-          paymentMethod: "cortesia",
-          expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+          status: "pending",
+          expiresAt: new Date(Date.now() + 15 * 60 * 1000),
         })
         .returning({ id: orders.id });
 
@@ -114,23 +112,7 @@ export async function POST(req: Request) {
       return order.id;
     });
 
-    // Envia o ingresso por e-mail (não bloqueia a emissão se falhar).
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? new URL(req.url).origin;
-    try {
-      const emailResult = await sendTicketEmail({
-        to: buyer.email,
-        buyerName: buyer.name,
-        orderId,
-        tickets: participants.map((p, i) => ({ holderName: p.name, tierName: slots[i].tierName })),
-        baseUrl,
-      });
-      if (emailResult.sent) console.log(`[checkout] e-mail enviado para ${buyer.email}`);
-      else console.warn(`[checkout] e-mail NAO enviado: ${emailResult.reason}`);
-    } catch (e) {
-      console.warn("[checkout] erro ao enviar e-mail:", e);
-    }
-
-    return NextResponse.json({ orderId });
+    return NextResponse.json({ orderId, totalCents });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Não foi possível gerar o pedido.";
     return NextResponse.json({ error: message }, { status: 409 });

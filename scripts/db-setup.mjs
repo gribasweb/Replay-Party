@@ -35,6 +35,9 @@ const ddl = [
      created_at timestamptz NOT NULL DEFAULT now(),
      expires_at timestamptz NOT NULL
    );`,
+  // Idempotente: garante as colunas de pagamento mesmo em bancos criados antes.
+  `ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method text;`,
+  `ALTER TABLE orders ADD COLUMN IF NOT EXISTS mp_payment_id text;`,
   `CREATE TABLE IF NOT EXISTS tickets (
      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
      order_id uuid NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
