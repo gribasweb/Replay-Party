@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
 import { isMpConfigured, mpPayment } from "@/lib/mercadopago";
 import { fulfillOrder } from "@/lib/fulfill";
+import { baseUrlFromRequest } from "@/lib/base-url";
 
 export const runtime = "nodejs";
 
@@ -33,7 +34,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Sua reserva expirou. Refaça o pedido." }, { status: 409 });
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? new URL(req.url).origin;
+  const baseUrl = baseUrlFromRequest(req);
   const isPix = formData.payment_method_id === "pix";
 
   try {

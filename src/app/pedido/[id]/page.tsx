@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { orders, tickets } from "@/lib/db/schema";
 import { EVENT, brl } from "@/lib/event";
 import { onlyDigits } from "@/lib/cpf";
+import { baseUrlFromHeaders } from "@/lib/base-url";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +44,7 @@ export default async function PedidoPage({ params }: { params: Promise<{ id: str
     );
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+  const baseUrl = await baseUrlFromHeaders();
   const ticketsWithQr = await Promise.all(
     ticketRows.map(async (t) => ({
       ...t,

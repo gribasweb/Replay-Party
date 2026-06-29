@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { tickets } from "@/lib/db/schema";
 import { EVENT } from "@/lib/event";
 import { onlyDigits } from "@/lib/cpf";
+import { baseUrlFromHeaders } from "@/lib/base-url";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +41,7 @@ export default async function IngressoPage({ params }: { params: Promise<{ token
 
   const used = ticket.status === "used";
   const cancelled = ticket.status === "cancelled";
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+  const baseUrl = await baseUrlFromHeaders();
   const qr = await QRCode.toDataURL(`${baseUrl}/ingresso/${ticket.qrToken}`, {
     margin: 1,
     width: 320,

@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
 import { mpPayment } from "@/lib/mercadopago";
 import { fulfillOrder } from "@/lib/fulfill";
+import { baseUrlFromRequest } from "@/lib/base-url";
 
 export const runtime = "nodejs";
 
@@ -20,7 +21,7 @@ export async function GET(req: Request) {
     try {
       const payment = await mpPayment.get({ id: order.mpPaymentId });
       if (payment.status === "approved") {
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? new URL(req.url).origin;
+        const baseUrl = baseUrlFromRequest(req);
         await fulfillOrder(orderId, {
           paymentId: order.mpPaymentId,
           method: order.paymentMethod ?? "pix",
