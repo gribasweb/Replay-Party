@@ -43,9 +43,9 @@ export const viewport: Viewport = {
   colorScheme: "dark",
 };
 
-// Only enforce reduced-motion on CSS animations in production, mirroring the
-// MotionProvider strategy (dev shows everything; prod respects the visitor).
-const reducedClass = process.env.NODE_ENV === "production" ? "respect-reduced" : "";
+// CSS animations (marquee, hero bands) always play — they're part of the
+// event's visual identity, matching the MotionProvider ("never") strategy.
+const reducedClass = "";
 
 export default function RootLayout({
   children,
