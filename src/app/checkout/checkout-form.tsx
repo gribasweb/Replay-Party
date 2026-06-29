@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Minus, Plus, Ticket } from "@phosphor-icons/react";
+import { ArrowLeft, ArrowRight, Minus, Plus, Ticket, UserCheck } from "@phosphor-icons/react";
 import { brl } from "@/lib/event";
 import { formatCPF, formatPhone, isValidCPF, onlyDigits } from "@/lib/cpf";
 
@@ -26,13 +26,9 @@ const emailOk = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 export function CheckoutForm({ lot }: { lot: LotInfo }) {
   const router = useRouter();
   const [quantity, setQuantity] = useState(1);
-  const [buyer, setBuyer] = useState<Person & { email: string; whatsapp: string }>({
-    name: "",
-    cpf: "",
-    email: "",
-    whatsapp: "",
-  });
-  const [participants, setParticipants] = useState<Person[]>([{ name: "", cpf: "" }]);
+  const [buyer, setBuyer] = useState({ name: "", cpf: "", email: "", whatsapp: "" });
+  // Only the EXTRA attendees (ingressos 2, 3...). The buyer is always ticket 1.
+  const [extras, setExtras] = useState<Person[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -42,23 +38,17 @@ export function CheckoutForm({ lot }: { lot: LotInfo }) {
   const changeQuantity = (next: number) => {
     const q = Math.max(1, Math.min(MAX_QTY, next));
     setQuantity(q);
-    setParticipants((prev) => {
+    setExtras((prev) => {
       const copy = [...prev];
-      while (copy.length < q) copy.push({ name: "", cpf: "" });
-      copy.length = q;
+      while (copy.length < q - 1) copy.push({ name: "", cpf: "" });
+      copy.length = q - 1;
       return copy;
     });
   };
 
-  const setParticipant = (i: number, field: keyof Person, value: string) => {
-    setParticipants((prev) =>
+  const setExtra = (i: number, field: keyof Person, value: string) => {
+    setExtras((prev) =>
       prev.map((p, idx) => (idx === i ? { ...p, [field]: field === "cpf" ? formatCPF(value) : value } : p)),
-    );
-  };
-
-  const copyBuyerToFirst = () => {
-    setParticipants((prev) =>
-      prev.map((p, idx) => (idx === 0 ? { name: buyer.name, cpf: buyer.cpf } : p)),
     );
   };
 
@@ -68,9 +58,9 @@ export function CheckoutForm({ lot }: { lot: LotInfo }) {
     if (!isValidCPF(buyer.cpf)) e["buyer.cpf"] = "CPF inválido";
     if (!emailOk(buyer.email)) e["buyer.email"] = "E-mail inválido";
     if (onlyDigits(buyer.whatsapp).length < 10) e["buyer.whatsapp"] = "WhatsApp inválido";
-    participants.forEach((p, i) => {
-      if (p.name.trim().length < 3) e[`p.${i}.name`] = "Informe o nome completo";
-      if (!isValidCPF(p.cpf)) e[`p.${i}.cpf`] = "CPF inválido";
+    extras.forEach((p, i) => {
+      if (p.name.trim().length < 3) e[`x.${i}.name`] = "Informe o nome completo";
+      if (!isValidCPF(p.cpf)) e[`x.${i}.cpf`] = "CPF inválido";
     });
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -81,6 +71,8 @@ export function CheckoutForm({ lot }: { lot: LotInfo }) {
     if (!validate()) return;
     setSubmitting(true);
     try {
+      // Ticket 1 = buyer; the rest are the extra attendees.
+      const participants = [{ name: buyer.name, cpf: buyer.cpf }, ...extras];
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -144,9 +136,13 @@ export function CheckoutForm({ lot }: { lot: LotInfo }) {
           </div>
         </section>
 
-        {/* Comprador */}
+        {/* Comprador = Ingresso 1 */}
         <section className="mt-8">
-          <h2 className="font-mono text-xs tracking-widest text-violet uppercase">Seus dados (comprador)</h2>
+          <h2 className="font-mono text-xs tracking-widest text-violet uppercase">Seus dados</h2>
+          <p className="mt-1 flex items-center gap-2 text-xs text-ash">
+            <UserCheck weight="bold" className="h-4 w-4 text-violet" />
+            Estes dados também valem como o <strong className="text-chalk">seu ingresso</strong> (nominal).
+          </p>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
               <Field label="Nome completo" value={buyer.name} onChange={(v) => setBuyer({ ...buyer, name: v })} error={errors["buyer.name"]} placeholder="Seu nome" />
@@ -159,34 +155,27 @@ export function CheckoutForm({ lot }: { lot: LotInfo }) {
           </div>
         </section>
 
-        {/* Participantes */}
-        <section className="mt-8">
-          <div className="flex items-center justify-between">
+        {/* Demais ingressos (só aparece se comprar para mais pessoas) */}
+        {quantity > 1 && (
+          <section className="mt-8">
             <h2 className="font-mono text-xs tracking-widest text-violet uppercase">
-              Participantes ({quantity} {quantity === 1 ? "ingresso" : "ingressos"})
+              Outras pessoas ({quantity - 1} {quantity - 1 === 1 ? "ingresso" : "ingressos"})
             </h2>
-          </div>
-          <p className="mt-1 text-xs text-ash">Cada ingresso é nominal. O nome e CPF serão conferidos na entrada.</p>
+            <p className="mt-1 text-xs text-ash">Preencha os dados de quem vai usar os outros ingressos.</p>
 
-          <div className="mt-4 space-y-4">
-            {participants.map((p, i) => (
-              <div key={i} className="border border-grape/60 bg-coal p-4" style={{ borderRadius: "var(--radius-stamp)" }}>
-                <div className="mb-3 flex items-center justify-between">
-                  <span className="font-display text-lg text-chalk uppercase">Ingresso {i + 1}</span>
-                  {i === 0 && (
-                    <button type="button" onClick={copyBuyerToFirst} className="font-mono text-[11px] tracking-wider text-magenta uppercase hover:underline">
-                      Usar meus dados
-                    </button>
-                  )}
+            <div className="mt-4 space-y-4">
+              {extras.map((p, i) => (
+                <div key={i} className="border border-grape/60 bg-coal p-4" style={{ borderRadius: "var(--radius-stamp)" }}>
+                  <div className="mb-3 font-display text-lg text-chalk uppercase">Ingresso {i + 2}</div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Field label="Nome do participante" value={p.name} onChange={(v) => setExtra(i, "name", v)} error={errors[`x.${i}.name`]} placeholder="Nome completo" />
+                    <Field label="CPF" value={p.cpf} onChange={(v) => setExtra(i, "cpf", v)} error={errors[`x.${i}.cpf`]} placeholder="000.000.000-00" inputMode="numeric" maxLength={14} />
+                  </div>
                 </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Nome do participante" value={p.name} onChange={(v) => setParticipant(i, "name", v)} error={errors[`p.${i}.name`]} placeholder="Nome completo" />
-                  <Field label="CPF" value={p.cpf} onChange={(v) => setParticipant(i, "cpf", v)} error={errors[`p.${i}.cpf`]} placeholder="000.000.000-00" inputMode="numeric" maxLength={14} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+        )}
 
         {serverError && (
           <p className="mt-6 border border-magenta/50 bg-magenta/10 px-4 py-3 text-sm text-chalk" style={{ borderRadius: "var(--radius-stamp)" }}>
@@ -201,7 +190,7 @@ export function CheckoutForm({ lot }: { lot: LotInfo }) {
           className="glow-magenta mt-8 flex w-full items-center justify-center gap-2 bg-magenta px-7 py-4 text-sm font-bold tracking-wide text-ink uppercase transition-transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60"
           style={{ borderRadius: "var(--radius-stamp)" }}
         >
-          {submitting ? "Gerando..." : "Gerar meu ingresso"}
+          {submitting ? "Gerando..." : quantity > 1 ? "Gerar meus ingressos" : "Gerar meu ingresso"}
           {!submitting && <ArrowRight weight="bold" className="h-5 w-5" />}
         </button>
         <p className="mt-3 text-center text-xs text-ash">
