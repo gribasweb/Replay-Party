@@ -29,7 +29,7 @@ const ACCENT = {
   },
 } as const;
 
-function TicketCard({ tier, index }: { tier: TicketTier; index: number }) {
+function TicketCard({ tier, index, maxPerks }: { tier: TicketTier; index: number; maxPerks: number }) {
   const a = ACCENT[tier.accent];
   const TierIcon = a.icon;
 
@@ -79,6 +79,13 @@ function TicketCard({ tier, index }: { tier: TicketTier; index: number }) {
               <li key={perk} className="flex items-center gap-2.5 text-sm text-chalk/90">
                 <Check weight="bold" className={`h-4 w-4 shrink-0 ${a.check}`} />
                 {perk}
+              </li>
+            ))}
+            {/* Linhas vazias para igualar a altura entre os cards (alinha o picote e os lotes) */}
+            {Array.from({ length: maxPerks - tier.perks.length }).map((_, i) => (
+              <li key={`pad-${i}`} aria-hidden className="invisible flex items-center gap-2.5 text-sm">
+                <Check weight="bold" className="h-4 w-4 shrink-0" />
+                <span>—</span>
               </li>
             ))}
           </ul>
@@ -143,6 +150,7 @@ function TicketCard({ tier, index }: { tier: TicketTier; index: number }) {
 }
 
 export function Tickets() {
+  const maxPerks = Math.max(...TICKETS.map((t) => t.perks.length));
   return (
     <section id="ingressos" className="relative scroll-mt-20 bg-ink py-20 lg:py-28">
       <div className="bg-grid absolute inset-0 opacity-60" aria-hidden />
@@ -168,7 +176,7 @@ export function Tickets() {
 
         <div className="mt-12 grid gap-6 lg:grid-cols-2 lg:gap-8">
           {TICKETS.map((tier, i) => (
-            <TicketCard key={tier.id} tier={tier} index={i} />
+            <TicketCard key={tier.id} tier={tier} index={i} maxPerks={maxPerks} />
           ))}
         </div>
       </div>
