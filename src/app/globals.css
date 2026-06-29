@@ -1,26 +1,179 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* =========================================================================
+   REPLAY PARTY - design tokens
+   Aesthetic: kinetic grunge / streetwear-rave. Neon purple + magenta on
+   near-black. Not an official design system; honest custom CSS + Tailwind v4.
+   ========================================================================= */
+
+@theme {
+  /* Brand palette (provided by the client) */
+  --color-ink: #040406; /* base background (off-black) */
+  --color-coal: #0a0710; /* raised surface 1 */
+  --color-plum: #160a1d; /* raised surface 2 */
+  --color-grape: #310037; /* deep purple, borders + elevated surfaces */
+  --color-violet: #7e03d8; /* neon violet (primary brand) */
+  --color-magenta: #f90a79; /* neon magenta (action accent) */
+  --color-chalk: #efebef; /* off-white text */
+  --color-ash: #aa9fb8; /* muted text (purple-grey) */
+
+  /* Type */
+  --font-display: var(--font-anton);
+  --font-sans: var(--font-space-grotesk);
+  --font-mono: var(--font-space-mono);
+
+  /* Sharp / industrial corner system */
+  --radius-stamp: 3px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  body {
+    background-color: var(--color-ink);
+    color: var(--color-chalk);
+    font-family: var(--font-sans), system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: var(--color-magenta);
+    color: var(--color-ink);
+  }
+
+  /* Tighter, theme-aware focus ring */
+  :focus-visible {
+    outline: 2px solid var(--color-magenta);
+    outline-offset: 2px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display), Impact, sans-serif;
+    letter-spacing: 0.01em;
+  }
+
+  /* Rough, sprayed edge for display headlines (applied as a class to avoid
+     inline-style hydration serialization mismatches). */
+  .grunge {
+    filter: url(#grunge);
+  }
+
+  /* Neon treatments - used sparingly (title, primary CTAs, VIP) because the
+     brief is nightlife. Not a default glow-everything. */
+  .text-glow-magenta {
+    text-shadow: 0 0 28px rgba(249, 10, 121, 0.45), 0 0 6px rgba(249, 10, 121, 0.55);
+  }
+  .text-glow-violet {
+    text-shadow: 0 0 28px rgba(126, 3, 216, 0.5), 0 0 6px rgba(126, 3, 216, 0.55);
+  }
+  .glow-violet {
+    box-shadow: 0 0 0 1px rgba(126, 3, 216, 0.45), 0 0 45px -8px rgba(126, 3, 216, 0.65);
+  }
+  .glow-magenta {
+    box-shadow: 0 0 0 1px rgba(249, 10, 121, 0.45), 0 0 45px -8px rgba(249, 10, 121, 0.7);
+  }
+
+  /* Hairline grid texture for section backgrounds */
+  .bg-grid {
+    background-image: linear-gradient(rgba(126, 3, 216, 0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(126, 3, 216, 0.07) 1px, transparent 1px);
+    background-size: 64px 64px;
+  }
+
+  /* Barcode strip for ticket stubs */
+  .barcode {
+    background-image: repeating-linear-gradient(
+      90deg,
+      var(--color-chalk) 0 2px,
+      transparent 2px 4px,
+      var(--color-chalk) 4px 5px,
+      transparent 5px 8px,
+      var(--color-chalk) 8px 11px,
+      transparent 11px 13px
+    );
+  }
+  .barcode-v {
+    background-image: repeating-linear-gradient(
+      0deg,
+      var(--color-chalk) 0 2px,
+      transparent 2px 4px,
+      var(--color-chalk) 4px 5px,
+      transparent 5px 8px,
+      var(--color-chalk) 8px 11px,
+      transparent 11px 13px
+    );
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Diagonal cross-bands (hero) */
+@keyframes band-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.band-track,
+.band-track-rev {
+  animation-name: band-scroll;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.band-track-rev {
+  animation-direction: reverse;
+}
+
+/* Kinetic marquee */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.animate-marquee {
+  animation: marquee 38s linear infinite;
+}
+
+/* Slow neon breathing on the hero glow blobs */
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate3d(0, -18px, 0) scale(1.08);
+    opacity: 0.8;
+  }
+}
+.animate-drift {
+  animation: drift 9s ease-in-out infinite;
+}
+
+/* Honor reduced motion only in production (see MotionProvider). The
+   `.respect-reduced` class is added to <html> by the layout in production. */
+@media (prefers-reduced-motion: reduce) {
+  .respect-reduced .animate-marquee,
+  .respect-reduced .animate-drift,
+  .respect-reduced .band-track,
+  .respect-reduced .band-track-rev {
+    animation: none !important;
+  }
 }
