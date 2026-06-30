@@ -52,6 +52,7 @@ export async function POST(req: Request) {
         transaction_amount: order.totalCents / 100,
         description: "Ingressos Replay Party",
         external_reference: orderId,
+        notification_url: `${baseUrl}/api/mp/webhook`,
         payment_method_id: formData.payment_method_id,
         token: formData.token,
         installments: formData.installments,

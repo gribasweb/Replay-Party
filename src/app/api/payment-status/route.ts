@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
-import { mpPayment } from "@/lib/mercadopago";
+import { mpPayment, mpPaymentWith } from "@/lib/mercadopago";
+import { getValidVendorToken } from "@/lib/mp-vendor";
 import { fulfillOrder } from "@/lib/fulfill";
 import { baseUrlFromRequest } from "@/lib/base-url";
 
@@ -19,7 +20,11 @@ export async function GET(req: Request) {
 
   if (order.mpPaymentId) {
     try {
-      const payment = await mpPayment.get({ id: order.mpPaymentId });
+      // O pagamento foi criado na conta do vendedor (split), então a consulta
+      // tem que usar o token DELE. Sem vendedor conectado, cai no token próprio.
+      const vendor = await getValidVendorToken();
+      const client = vendor ? mpPaymentWith(vendor.accessToken) : mpPayment;
+      const payment = await client.get({ id: order.mpPaymentId });
       if (payment.status === "approved") {
         const baseUrl = baseUrlFromRequest(req);
         await fulfillOrder(orderId, {
@@ -30,7 +35,8 @@ export async function GET(req: Request) {
         return NextResponse.json({ status: "paid" });
       }
       return NextResponse.json({ status: payment.status ?? "pending" });
-    } catch {
+    } catch (e) {
+      console.error("[payment-status] erro ao consultar MP:", e);
       return NextResponse.json({ status: order.status });
     }
   }
