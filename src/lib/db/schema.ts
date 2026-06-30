@@ -71,7 +71,18 @@ export const mpCredentials = pgTable("mp_credentials", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+/** Acessos ao site (anônimo, sem cookie) para o contador no painel. */
+export const pageViews = pgTable("page_views", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  path: text("path").notNull(),
+  referrer: text("referrer"),
+  source: text("source"), // instagram | whatsapp | direto | google | ...
+  visitor: text("visitor"), // hash anônimo (ip+ua+dia), sem guardar IP cru
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 export type Lot = typeof lots.$inferSelect;
 export type Order = typeof orders.$inferSelect;
 export type Ticket = typeof tickets.$inferSelect;
 export type MpCredentials = typeof mpCredentials.$inferSelect;
+export type PageView = typeof pageViews.$inferSelect;

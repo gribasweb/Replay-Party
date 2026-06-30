@@ -63,6 +63,15 @@ const ddl = [
      expires_at timestamptz,
      updated_at timestamptz NOT NULL DEFAULT now()
    );`,
+  `CREATE TABLE IF NOT EXISTS page_views (
+     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+     path text NOT NULL,
+     referrer text,
+     source text,
+     visitor text,
+     created_at timestamptz NOT NULL DEFAULT now()
+   );`,
+  `CREATE INDEX IF NOT EXISTS idx_page_views_created ON page_views(created_at);`,
 ];
 
 // Lotes (preços em centavos). Datas em horário de Brasília.

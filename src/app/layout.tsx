@@ -3,6 +3,7 @@ import { Anton, Space_Grotesk, Space_Mono } from "next/font/google";
 import "./globals.css";
 import { GrainOverlay } from "@/components/grain-overlay";
 import { MotionProvider } from "@/components/motion-provider";
+import { PageTracker } from "@/components/page-tracker";
 import { EVENT } from "@/lib/event";
 
 const anton = Anton({
@@ -83,6 +84,7 @@ export default function RootLayout({
 
         <GrainOverlay />
         <MotionProvider>{children}</MotionProvider>
+        <PageTracker />
       </body>
     </html>
   );
