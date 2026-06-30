@@ -8,10 +8,20 @@ function envBase(): string | null {
 
 /**
  * Base URL para Route Handlers (têm o Request). Usa a env se definida,
- * senão o próprio origin da requisição (cobre qualquer domínio/preview).
+ * senão o host público dos headers de proxy. Atrás de um proxy reverso
+ * (nginx no VPS), `req.url` traz o host INTERNO (localhost:3000); o domínio
+ * real chega em `x-forwarded-host`. Por isso priorizamos os headers e só
+ * caímos no `req.url` se não houver nenhum host (ambiente sem proxy).
  */
 export function baseUrlFromRequest(req: Request): string {
-  return envBase() ?? new URL(req.url).origin;
+  const fromEnv = envBase();
+  if (fromEnv) return fromEnv;
+  const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
+  if (host) {
+    const proto = req.headers.get("x-forwarded-proto") ?? "https";
+    return `${proto}://${host}`;
+  }
+  return new URL(req.url).origin;
 }
 
 /**
