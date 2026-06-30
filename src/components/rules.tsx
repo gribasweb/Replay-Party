@@ -9,7 +9,7 @@ import {
   ArrowsLeftRight,
   Storefront,
   WhatsappLogo,
-  XCircle,
+  ArrowCounterClockwise,
   type Icon,
 } from "@phosphor-icons/react";
 import { Reveal } from "@/components/reveal";
@@ -17,13 +17,13 @@ import { Reveal } from "@/components/reveal";
 const FAQ: { icon: Icon; q: string; a: string }[] = [
   {
     icon: IdentificationCard,
-    q: "Idade mínima: 16 anos",
-    a: "A entrada é permitida a partir de 16 anos. Leve um documento oficial com foto, pode ser solicitado na portaria.",
+    q: "Idade mínima: 18 anos",
+    a: "A entrada é permitida a partir de 18 anos. Leve um documento oficial com foto, pode ser solicitado na portaria.",
   },
   {
-    icon: XCircle,
-    q: "Política de reembolso",
-    a: "Não há reembolso após a confirmação da compra. Confira os dados antes de finalizar.",
+    icon: ArrowCounterClockwise,
+    q: "Cancelamento e reembolso",
+    a: "Comprou e se arrependeu? Você tem 7 dias corridos a partir da compra para cancelar e receber 100% de volta, incluindo as taxas (Art. 49 do Código de Defesa do Consumidor), desde que o ingresso ainda não tenha sido utilizado. Se o evento for cancelado ou tiver a data ou o local alterados, o reembolso também é integral. O estorno é feito em até 30 dias — para solicitar, fale com a gente pelo WhatsApp. Passados os 7 dias, você ainda pode transferir o ingresso para outra pessoa (logo abaixo).",
   },
   {
     icon: ArrowsLeftRight,

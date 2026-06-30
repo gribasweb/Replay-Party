@@ -7,7 +7,7 @@ const ITEMS = [
   "Dois DJs",
   "Open Bar",
   "Pista + VIP",
-  "16+",
+  `${EVENT.minAge}+`,
 ];
 
 /**

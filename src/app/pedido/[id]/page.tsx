@@ -76,7 +76,7 @@ export default async function PedidoPage({ params }: { params: Promise<{ id: str
           <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-ash">
             <MapPin weight="bold" className="h-4 w-4 shrink-0 text-magenta" />
             <span>
-              {EVENT.venue.street}, {EVENT.venue.district} · {EVENT.venue.city}
+              {EVENT.venue.street}, {EVENT.venue.district} · {EVENT.venue.city} · {EVENT.venue.cep}
             </span>
             <a
               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(EVENT.venue.mapsQuery)}`}

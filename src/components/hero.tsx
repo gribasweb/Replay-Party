@@ -77,20 +77,21 @@ export function Hero() {
           transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
           className="flex flex-col items-center gap-6"
         >
-          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 font-mono text-sm text-chalk [text-shadow:0_2px_12px_rgba(4,4,6,0.9)]">
-            <span className="flex items-center gap-2">
-              <CalendarBlank weight="bold" className="h-5 w-5 text-magenta" />
-              {EVENT.dateLabel}
-            </span>
-            <span className="hidden h-4 w-px bg-chalk/30 sm:block" />
-            <span className="flex items-center gap-2">
-              <MapPin weight="bold" className="h-5 w-5 text-magenta" />
-              {EVENT.venue.city}
-            </span>
-            <span className="hidden h-4 w-px bg-chalk/30 sm:block" />
-            <span className="rounded-sm border border-chalk/30 px-2 py-0.5 text-magenta">
-              {EVENT.minAge}+
-            </span>
+          <div className="flex flex-col items-center gap-2.5">
+            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 font-mono text-sm text-chalk [text-shadow:0_2px_12px_rgba(4,4,6,0.9)]">
+              <span className="flex items-center gap-2">
+                <CalendarBlank weight="bold" className="h-5 w-5 text-magenta" />
+                {EVENT.dateLabel}
+              </span>
+              <span className="hidden h-4 w-px bg-chalk/30 sm:block" />
+              <span className="rounded-sm border border-chalk/30 px-2 py-0.5 text-magenta">
+                {EVENT.minAge}+
+              </span>
+            </div>
+            <p className="flex items-center justify-center gap-2 font-mono text-xs text-chalk/90 [text-shadow:0_2px_12px_rgba(4,4,6,0.9)] sm:text-sm">
+              <MapPin weight="bold" className="h-4 w-4 shrink-0 text-magenta" />
+              {EVENT.venue.street}, {EVENT.venue.district} · {EVENT.venue.city} · {EVENT.venue.cep}
+            </p>
           </div>
 
           <div className="flex flex-wrap justify-center gap-4">
