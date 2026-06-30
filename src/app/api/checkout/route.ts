@@ -105,7 +105,7 @@ export async function POST(req: Request) {
           buyerWhatsapp: buyer.whatsapp,
           totalCents,
           status: "pending",
-          expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+          expiresAt: new Date(Date.now() + 30 * 60 * 1000),
         })
         .returning({ id: orders.id });
 

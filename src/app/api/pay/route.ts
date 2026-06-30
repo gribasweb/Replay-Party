@@ -17,6 +17,13 @@ interface BrickFormData {
   issuer_id?: string;
 }
 
+/** ISO 8601 com offset de Brasília (-03:00), formato aceito pelo Mercado Pago. */
+function toMpExpiry(d: Date): string {
+  const b = new Date(d.getTime() - 3 * 60 * 60 * 1000);
+  const z = (n: number) => String(n).padStart(2, "0");
+  return `${b.getUTCFullYear()}-${z(b.getUTCMonth() + 1)}-${z(b.getUTCDate())}T${z(b.getUTCHours())}:${z(b.getUTCMinutes())}:${z(b.getUTCSeconds())}.000-03:00`;
+}
+
 export async function POST(req: Request) {
   if (!isMpConfigured()) {
     return NextResponse.json({ error: "Pagamento não configurado." }, { status: 503 });
@@ -37,6 +44,9 @@ export async function POST(req: Request) {
 
   const baseUrl = baseUrlFromRequest(req);
   const isPix = formData.payment_method_id === "pix";
+  // Pix: a cobrança expira junto com a reserva (30 min), evitando que um Pix
+  // pago tarde demais confirme um lugar que já foi liberado/revendido.
+  const pixExpiry = new Date(Date.now() + 30 * 60 * 1000);
 
   // Split de Pagamentos: se o organizador conectou a conta dele, o pagamento é
   // criado NA CONTA DELE com a nossa comissão (application_fee), e o Mercado
@@ -59,7 +69,7 @@ export async function POST(req: Request) {
         issuer_id: formData.issuer_id ? Number(formData.issuer_id) : undefined,
         ...(applicationFee != null ? { application_fee: applicationFee } : {}),
         // Card: decide on the spot (approved/rejected). Pix is always async.
-        ...(isPix ? {} : { binary_mode: true }),
+        ...(isPix ? { date_of_expiration: toMpExpiry(pixExpiry) } : { binary_mode: true }),
         payer: {
           email: order.buyerEmail,
           identification: { type: "CPF", number: order.buyerCpf },
@@ -80,7 +90,7 @@ export async function POST(req: Request) {
     if (isPix && result.status === "pending") {
       await db
         .update(orders)
-        .set({ mpPaymentId: String(result.id), paymentMethod: "pix" })
+        .set({ mpPaymentId: String(result.id), paymentMethod: "pix", expiresAt: pixExpiry })
         .where(eq(orders.id, orderId));
       const td = result.point_of_interaction?.transaction_data;
       return NextResponse.json({

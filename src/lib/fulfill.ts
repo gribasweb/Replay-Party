@@ -28,14 +28,20 @@ export async function fulfillOrder(
     .where(eq(tickets.orderId, orderId));
 
   try {
-    await sendTicketEmail({
+    const result = await sendTicketEmail({
       to: order.email,
       buyerName: order.name,
       orderId,
       tickets: ticketRows,
       baseUrl: opts.baseUrl,
     });
-  } catch {
-    /* e-mail failure must not break fulfillment */
+    if (result.sent) {
+      console.log(`[fulfill] e-mail enviado para ${order.email} (pedido ${orderId})`);
+    } else {
+      console.error(`[fulfill] FALHA ao enviar e-mail (pedido ${orderId}): ${result.reason}`);
+    }
+  } catch (e) {
+    // O envio nunca deve quebrar a emissão (o pedido já está pago), mas logamos.
+    console.error(`[fulfill] erro inesperado no e-mail (pedido ${orderId}):`, e);
   }
 }
