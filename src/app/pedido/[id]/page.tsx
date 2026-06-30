@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import QRCode from "qrcode";
 import { eq } from "drizzle-orm";
-import { CalendarBlank, MapPin } from "@phosphor-icons/react/dist/ssr";
+import { CalendarBlank, CheckCircle, MapPin, XCircle } from "@phosphor-icons/react/dist/ssr";
 import { db } from "@/lib/db";
 import { orders, tickets } from "@/lib/db/schema";
 import { EVENT } from "@/lib/event";
@@ -18,6 +18,15 @@ const maskCpf = (cpf: string) => {
   if (d.length !== 11) return cpf;
   return `***.${d.slice(3, 6)}.${d.slice(6, 9)}-**`;
 };
+
+const formatCheckin = (d: Date) =>
+  d.toLocaleString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
 export default async function PedidoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -127,24 +136,52 @@ export default async function PedidoPage({ params }: { params: Promise<{ id: str
         <div className="mt-8 space-y-6">
           {ticketsWithQr.map((t, i) => (
             <TicketReveal key={t.id} index={i}>
-              <article className="overflow-hidden border border-grape bg-plum" style={{ borderRadius: "var(--radius-stamp)" }}>
+              <article
+                className={`overflow-hidden border bg-plum ${t.status === "used" ? "border-magenta/60" : "border-grape"}`}
+                style={{ borderRadius: "var(--radius-stamp)" }}
+              >
               <div className="flex items-center justify-between bg-gradient-to-r from-grape/60 to-plum px-5 py-3">
                 <span className="font-display text-2xl text-chalk uppercase">{t.tierName}</span>
-                <span className="font-mono text-[11px] tracking-widest text-ash uppercase">
-                  Ingresso {i + 1} de {ticketsWithQr.length}
-                </span>
+                {t.status === "used" ? (
+                  <span className="flex items-center gap-1.5 font-mono text-[11px] tracking-widest text-magenta uppercase">
+                    <XCircle weight="fill" className="h-4 w-4" /> Utilizado
+                  </span>
+                ) : (
+                  <span className="font-mono text-[11px] tracking-widest text-ash uppercase">
+                    Ingresso {i + 1} de {ticketsWithQr.length}
+                  </span>
+                )}
               </div>
               <div className="flex flex-col items-center gap-5 p-5 sm:flex-row">
                 <div className="shrink-0 bg-white p-3" style={{ borderRadius: "var(--radius-stamp)" }}>
-                  <Image src={t.qr} alt="QR Code do ingresso" width={150} height={150} unoptimized />
+                  <Image
+                    src={t.qr}
+                    alt="QR Code do ingresso"
+                    width={150}
+                    height={150}
+                    unoptimized
+                    className={t.status === "used" || t.status === "cancelled" ? "opacity-25" : ""}
+                  />
                 </div>
                 <div className="flex-1 text-center sm:text-left">
                   <div className="font-mono text-[11px] tracking-widest text-ash uppercase">Participante</div>
                   <div className="font-display text-2xl leading-tight text-chalk">{t.holderName}</div>
                   <div className="mt-1 font-mono text-sm text-ash">CPF {maskCpf(t.holderCpf)}</div>
-                  <div className="mt-3 inline-block border border-violet/40 bg-violet/10 px-3 py-1 font-mono text-[10px] tracking-widest text-violet uppercase" style={{ borderRadius: "var(--radius-stamp)" }}>
-                    Válido · {EVENT.dateLabel}
-                  </div>
+                  {t.status === "used" ? (
+                    <div className="mt-3 inline-flex items-center gap-1.5 border border-magenta/40 bg-magenta/10 px-3 py-1 font-mono text-[10px] tracking-widest text-magenta uppercase" style={{ borderRadius: "var(--radius-stamp)" }}>
+                      <XCircle weight="fill" className="h-3.5 w-3.5" />
+                      Já utilizado{t.checkedInAt ? ` · ${formatCheckin(t.checkedInAt)}` : ""}
+                    </div>
+                  ) : t.status === "cancelled" ? (
+                    <div className="mt-3 inline-block border border-ash/40 bg-ash/10 px-3 py-1 font-mono text-[10px] tracking-widest text-ash uppercase" style={{ borderRadius: "var(--radius-stamp)" }}>
+                      Cancelado
+                    </div>
+                  ) : (
+                    <div className="mt-3 inline-flex items-center gap-1.5 border border-violet/40 bg-violet/10 px-3 py-1 font-mono text-[10px] tracking-widest text-violet uppercase" style={{ borderRadius: "var(--radius-stamp)" }}>
+                      <CheckCircle weight="fill" className="h-3.5 w-3.5" />
+                      Válido · {EVENT.dateLabel}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="barcode h-7 opacity-70" aria-hidden />
