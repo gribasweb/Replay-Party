@@ -35,7 +35,7 @@ export const EVENT = {
   dateLabel: "25 JUL 2026",
   dayLabel: "25.07",
   timeLabel: "10:00 às 04:00",
-  minAge: 18,
+  minAge: 16,
   capacity: 1800,
   djCount: 2,
   venue: {
