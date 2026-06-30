@@ -64,17 +64,29 @@ export default async function PedidoPage({ params }: { params: Promise<{ id: str
         {/* Sucesso (confete + carimbo CONFIRMADO) */}
         <SuccessCelebration count={ticketsWithQr.length} />
 
-        {/* Resumo do evento */}
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 border-y border-grape/50 py-4 font-mono text-sm text-chalk">
-          <span className="font-display text-lg tracking-wide">{EVENT.name}</span>
-          <span className="flex items-center gap-2 text-ash">
-            <CalendarBlank weight="bold" className="h-4 w-4 text-magenta" />
-            {EVENT.dateLabel}
-          </span>
-          <span className="flex items-center gap-2 text-ash">
-            <MapPin weight="bold" className="h-4 w-4 text-magenta" />
-            {EVENT.venue.city}
-          </span>
+        {/* Resumo do evento + endereço */}
+        <div className="mt-8 space-y-2 border-y border-grape/50 py-4 text-center font-mono text-sm">
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1">
+            <span className="font-display text-lg tracking-wide text-chalk">{EVENT.name}</span>
+            <span className="flex items-center gap-2 text-ash">
+              <CalendarBlank weight="bold" className="h-4 w-4 text-magenta" />
+              {EVENT.dateLabel} · {EVENT.timeLabel}
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-ash">
+            <MapPin weight="bold" className="h-4 w-4 shrink-0 text-magenta" />
+            <span>
+              {EVENT.venue.street}, {EVENT.venue.district} · {EVENT.venue.city}
+            </span>
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(EVENT.venue.mapsQuery)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-magenta hover:underline"
+            >
+              Ver no mapa
+            </a>
+          </div>
         </div>
 
         {/* Ingressos */}

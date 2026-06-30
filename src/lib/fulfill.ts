@@ -23,7 +23,7 @@ export async function fulfillOrder(
 
   const order = updated[0];
   const ticketRows = await db
-    .select({ holderName: tickets.holderName, tierName: tickets.tierName })
+    .select({ holderName: tickets.holderName, tierName: tickets.tierName, qrToken: tickets.qrToken })
     .from(tickets)
     .where(eq(tickets.orderId, orderId));
 
