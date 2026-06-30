@@ -5,7 +5,6 @@ import { requireOperatorSession } from "@/lib/operator-session";
 
 export const runtime = "nodejs";
 
-const TZ = "America/Sao_Paulo";
 type Row = Record<string, unknown>;
 const n = (v: unknown) => Number(v ?? 0);
 
@@ -21,16 +20,17 @@ export async function GET(req: Request) {
   const today = (await db.execute(sql`
     select count(*)::int as views, count(distinct visitor)::int as visitors
     from page_views
-    where (created_at at time zone ${TZ})::date = (now() at time zone ${TZ})::date
+    where (created_at at time zone 'America/Sao_Paulo')::date
+        = (now() at time zone 'America/Sao_Paulo')::date
   `)) as unknown as Row[];
 
   const byDay = (await db.execute(sql`
-    select to_char((created_at at time zone ${TZ})::date, 'DD/MM') as day,
+    select to_char((created_at at time zone 'America/Sao_Paulo')::date, 'DD/MM') as day,
            count(*)::int as views, count(distinct visitor)::int as visitors
     from page_views
     where created_at >= now() - interval '14 days'
-    group by (created_at at time zone ${TZ})::date
-    order by (created_at at time zone ${TZ})::date
+    group by (created_at at time zone 'America/Sao_Paulo')::date
+    order by (created_at at time zone 'America/Sao_Paulo')::date
   `)) as unknown as Row[];
 
   const sources = (await db.execute(sql`
