@@ -1,0 +1,71 @@
+import { NextResponse } from "next/server";
+import { randomUUID } from "node:crypto";
+import { eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { lots, orders, tickets } from "@/lib/db/schema";
+import { fulfillOrder } from "@/lib/fulfill";
+import { baseUrlFromRequest } from "@/lib/base-url";
+
+export const runtime = "nodejs";
+
+interface Person {
+  name: string;
+  cpf: string;
+  email: string;
+}
+
+/**
+ * Emissão de cortesias (convidados): cria um pedido por pessoa, sem cobrança,
+ * e dispara o e-mail do ingresso reutilizando o mesmo fluxo das compras reais
+ * (`fulfillOrder` → `sendTicketEmail`). Protegido pela senha de admin (?key=).
+ */
+export async function POST(req: Request) {
+  const key = new URL(req.url).searchParams.get("key") ?? "";
+  if (!process.env.CHECKIN_PASSWORD || key !== process.env.CHECKIN_PASSWORD) {
+    return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
+  }
+
+  const body = (await req.json().catch(() => null)) as { lotId?: string; people?: Person[] } | null;
+  if (!body?.lotId || !Array.isArray(body.people) || body.people.length === 0) {
+    return NextResponse.json({ error: "Informe lotId e people[]." }, { status: 400 });
+  }
+
+  const [lot] = await db.select().from(lots).where(eq(lots.id, body.lotId));
+  if (!lot) return NextResponse.json({ error: "Lote não encontrado." }, { status: 400 });
+
+  const baseUrl = baseUrlFromRequest(req);
+  const results: { name: string; email: string; orderId: string }[] = [];
+
+  for (const person of body.people) {
+    const [order] = await db
+      .insert(orders)
+      .values({
+        buyerName: person.name,
+        buyerCpf: person.cpf,
+        buyerEmail: person.email,
+        buyerWhatsapp: "",
+        totalCents: 0,
+        status: "pending",
+        paymentMethod: "cortesia",
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+      })
+      .returning({ id: orders.id });
+
+    await db.insert(tickets).values({
+      orderId: order.id,
+      lotId: lot.id,
+      tier: lot.tier,
+      tierName: lot.tierName,
+      holderName: person.name,
+      holderCpf: person.cpf,
+      priceCents: 0,
+      qrToken: randomUUID(),
+    });
+
+    // Marca como pago e envia o e-mail (mesmo caminho das compras reais).
+    await fulfillOrder(order.id, { method: "cortesia", baseUrl });
+    results.push({ name: person.name, email: person.email, orderId: order.id });
+  }
+
+  return NextResponse.json({ ok: true, count: results.length, results });
+}
