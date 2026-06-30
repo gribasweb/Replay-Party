@@ -54,6 +54,15 @@ const ddl = [
   `CREATE INDEX IF NOT EXISTS idx_tickets_order ON tickets(order_id);`,
   `CREATE INDEX IF NOT EXISTS idx_tickets_lot ON tickets(lot_id);`,
   `CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);`,
+  `CREATE TABLE IF NOT EXISTS mp_credentials (
+     id text PRIMARY KEY,
+     mp_user_id text,
+     access_token text NOT NULL,
+     refresh_token text,
+     public_key text,
+     expires_at timestamptz,
+     updated_at timestamptz NOT NULL DEFAULT now()
+   );`,
 ];
 
 // Lotes (preços em centavos). Datas em horário de Brasília.

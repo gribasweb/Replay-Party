@@ -2,6 +2,7 @@ import Link from "next/link";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { lots } from "@/lib/db/schema";
+import { getVendorCredentials } from "@/lib/mp-vendor";
 import { CheckoutForm } from "./checkout-form";
 
 export const dynamic = "force-dynamic";
@@ -37,8 +38,14 @@ export default async function CheckoutPage({
     );
   }
 
+  // Split: se o organizador conectou a conta, o Brick usa a chave pública DELE
+  // (o cartão é tokenizado para a conta dele). Sem conexão, usa a chave própria.
+  const cred = await getVendorCredentials();
+  const publicKey = cred?.publicKey || process.env.NEXT_PUBLIC_MP_PUBLIC_KEY || "";
+
   return (
     <CheckoutForm
+      publicKey={publicKey}
       lot={{
         id: lot.id,
         tier: lot.tier,

@@ -3,7 +3,8 @@ import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
-import { isMpConfigured, mpPayment } from "@/lib/mercadopago";
+import { isMpConfigured, mpPayment, mpPaymentWith } from "@/lib/mercadopago";
+import { getValidVendorToken, COMMISSION_RATE } from "@/lib/mp-vendor";
 import { fulfillOrder } from "@/lib/fulfill";
 import { baseUrlFromRequest } from "@/lib/base-url";
 
@@ -37,8 +38,16 @@ export async function POST(req: Request) {
   const baseUrl = baseUrlFromRequest(req);
   const isPix = formData.payment_method_id === "pix";
 
+  // Split de Pagamentos: se o organizador conectou a conta dele, o pagamento é
+  // criado NA CONTA DELE com a nossa comissão (application_fee), e o Mercado
+  // Pago divide automaticamente. Sem conexão, cai no fallback da conta própria
+  // (sem split) — assim a venda nunca trava por falta de conexão.
+  const vendor = await getValidVendorToken();
+  const payment = vendor ? mpPaymentWith(vendor.accessToken) : mpPayment;
+  const applicationFee = vendor ? Math.round(order.totalCents * COMMISSION_RATE) / 100 : undefined;
+
   try {
-    const result = await mpPayment.create({
+    const result = await payment.create({
       body: {
         transaction_amount: order.totalCents / 100,
         description: "Ingressos Replay Party",
@@ -47,6 +56,7 @@ export async function POST(req: Request) {
         token: formData.token,
         installments: formData.installments,
         issuer_id: formData.issuer_id ? Number(formData.issuer_id) : undefined,
+        ...(applicationFee != null ? { application_fee: applicationFee } : {}),
         // Card: decide on the spot (approved/rejected). Pix is always async.
         ...(isPix ? {} : { binary_mode: true }),
         payer: {

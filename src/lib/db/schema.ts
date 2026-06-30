@@ -56,6 +56,22 @@ export const tickets = pgTable("tickets", {
   checkedInAt: timestamp("checked_in_at", { withTimezone: true }),
 });
 
+/**
+ * Credencial do VENDEDOR (organizador) obtida via OAuth do Mercado Pago.
+ * Linha única (id = "vendor"). Os pagamentos são criados na conta do vendedor
+ * com o nosso application_fee de 15% (Split de Pagamentos / marketplace).
+ */
+export const mpCredentials = pgTable("mp_credentials", {
+  id: text("id").primaryKey(), // sempre "vendor"
+  mpUserId: text("mp_user_id"),
+  accessToken: text("access_token").notNull(),
+  refreshToken: text("refresh_token"),
+  publicKey: text("public_key"),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 export type Lot = typeof lots.$inferSelect;
 export type Order = typeof orders.$inferSelect;
 export type Ticket = typeof tickets.$inferSelect;
+export type MpCredentials = typeof mpCredentials.$inferSelect;

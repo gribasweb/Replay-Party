@@ -6,21 +6,37 @@ import Image from "next/image";
 import { initMercadoPago, Payment } from "@mercadopago/sdk-react";
 import { CheckCircle, Copy, SpinnerGap } from "@phosphor-icons/react";
 
-initMercadoPago(process.env.NEXT_PUBLIC_MP_PUBLIC_KEY ?? "", { locale: "pt-BR" });
-
 interface PixData {
   qr_code?: string;
   qr_code_base64?: string;
   ticket_url?: string;
 }
 
-export function PaymentBrick({ orderId, amount, email }: { orderId: string; amount: number; email: string }) {
+export function PaymentBrick({
+  orderId,
+  amount,
+  email,
+  publicKey,
+}: {
+  orderId: string;
+  amount: number;
+  email: string;
+  publicKey: string;
+}) {
   const router = useRouter();
   const [mode, setMode] = useState<"form" | "pix">("form");
   const [pix, setPix] = useState<PixData | null>(null);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [ready, setReady] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (publicKey) {
+      initMercadoPago(publicKey, { locale: "pt-BR" });
+      setReady(true);
+    }
+  }, [publicKey]);
 
   useEffect(() => {
     return () => {
@@ -120,33 +136,37 @@ export function PaymentBrick({ orderId, amount, email }: { orderId: string; amou
           {error}
         </p>
       )}
-      <Payment
-        initialization={{ amount, payer: { email } }}
-        customization={{
-          paymentMethods: {
-            creditCard: "all",
-            debitCard: "all",
-            bankTransfer: "all",
-            maxInstallments: 12,
-          },
-          visual: {
-            // Os campos seguros (iframes PCI) sempre têm fundo branco e não
-            // respeitam inputBackgroundColor. Por isso usamos o tema claro
-            // padrão (tudo legível: fundo claro + texto escuro), com a cor da
-            // marca no botão. Fica num "cartão" claro dentro da página escura.
-            style: {
-              theme: "default",
-              customVariables: {
-                baseColor: "#f90a79",
-                borderRadiusSmall: "4px",
-                borderRadiusMedium: "6px",
+      {ready ? (
+        <Payment
+          initialization={{ amount, payer: { email } }}
+          customization={{
+            paymentMethods: {
+              creditCard: "all",
+              debitCard: "all",
+              bankTransfer: "all",
+              maxInstallments: 12,
+            },
+            visual: {
+              // Os campos seguros (iframes PCI) sempre têm fundo branco e não
+              // respeitam inputBackgroundColor. Por isso usamos o tema claro
+              // padrão (tudo legível: fundo claro + texto escuro), com a cor da
+              // marca no botão. Fica num "cartão" claro dentro da página escura.
+              style: {
+                theme: "default",
+                customVariables: {
+                  baseColor: "#f90a79",
+                  borderRadiusSmall: "4px",
+                  borderRadiusMedium: "6px",
+                },
               },
             },
-          },
-        }}
-        onSubmit={onSubmit}
-        onError={(e) => console.error("brick error", e)}
-      />
+          }}
+          onSubmit={onSubmit}
+          onError={(e) => console.error("brick error", e)}
+        />
+      ) : (
+        <p className="py-8 text-center text-sm text-ash">Carregando opções de pagamento...</p>
+      )}
     </div>
   );
 }

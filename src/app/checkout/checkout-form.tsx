@@ -23,7 +23,7 @@ interface Person {
 const MAX_QTY = 10;
 const emailOk = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
-export function CheckoutForm({ lot }: { lot: LotInfo }) {
+export function CheckoutForm({ lot, publicKey }: { lot: LotInfo; publicKey: string }) {
   const [step, setStep] = useState<"form" | "payment">("form");
   const [orderId, setOrderId] = useState("");
   const [quantity, setQuantity] = useState(1);
@@ -206,7 +206,7 @@ export function CheckoutForm({ lot }: { lot: LotInfo }) {
           </>
         ) : (
           <section className="mt-8">
-            <PaymentBrick orderId={orderId} amount={totalCents / 100} email={buyer.email} />
+            <PaymentBrick orderId={orderId} amount={totalCents / 100} email={buyer.email} publicKey={publicKey} />
             <button
               type="button"
               onClick={() => setStep("form")}
