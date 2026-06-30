@@ -16,13 +16,17 @@ export function Hero() {
     offset: ["start start", "end start"],
   });
   const sceneY = useTransform(scrollYProgress, [0, 1], ["0%", "14%"]);
-  // Same parallax value on background and DJ so the cut-out stays aligned with
-  // the DJ baked into the background (they share the exact 1920x1080 frame).
-  useEffect(() => setMounted(true), []);
-  const y = mounted ? sceneY : "0%";
+  // Parallax só no desktop: no mobile ele engasga o scroll e faz a imagem
+  // "respirar" junto com a barra do navegador que aparece/some.
+  const [parallaxOn, setParallaxOn] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+    setParallaxOn(window.matchMedia("(min-width: 768px)").matches);
+  }, []);
+  const y = mounted && parallaxOn ? sceneY : "0%";
 
   return (
-    <section id="inicio" ref={ref} className="relative min-h-[100dvh] overflow-hidden bg-ink">
+    <section id="inicio" ref={ref} className="relative min-h-[100svh] overflow-hidden bg-ink">
       {/* Layer 1 — background photo (already color-graded by the client) */}
       <motion.div style={{ y }} className="absolute inset-0 z-0">
         <Image src="/fundo.webp" alt="" fill priority sizes="100vw" className="hidden object-cover object-[center_60%] md:block" />
@@ -66,7 +70,7 @@ export function Hero() {
       </div>
 
       {/* Layer 5 — content (logo + tagline live inside the image) */}
-      <div className="relative z-40 mx-auto flex min-h-[100dvh] max-w-[1400px] flex-col items-center justify-end px-5 pb-14 pt-20 text-center lg:pb-20 lg:pt-24">
+      <div className="relative z-40 mx-auto flex min-h-[100svh] max-w-[1400px] flex-col items-center justify-end px-5 pb-14 pt-20 text-center lg:pb-20 lg:pt-24">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}

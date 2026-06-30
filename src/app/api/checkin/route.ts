@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { and, eq, ilike, or, sql } from "drizzle-orm";
+import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { orders, tickets } from "@/lib/db/schema";
 import { onlyDigits } from "@/lib/cpf";
@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 
 interface CheckinBody {
   password?: string;
-  action?: "scan" | "redeem" | "search" | "stats";
+  action?: "scan" | "redeem" | "search" | "stats" | "recent";
   token?: string;
   ticketId?: string;
   query?: string;
@@ -47,6 +47,23 @@ export async function POST(req: Request) {
       .from(tickets)
       .innerJoin(orders, eq(tickets.orderId, orders.id));
     return NextResponse.json({ total: Number(row?.total ?? 0), used: Number(row?.used ?? 0) });
+  }
+
+  // Últimas entradas: lista ao vivo dos validados, mais recentes primeiro.
+  if (body.action === "recent") {
+    const rows = await db
+      .select({
+        id: tickets.id,
+        name: tickets.holderName,
+        tierName: tickets.tierName,
+        checkedInAt: tickets.checkedInAt,
+      })
+      .from(tickets)
+      .innerJoin(orders, eq(tickets.orderId, orders.id))
+      .where(and(eq(orders.status, "paid"), eq(tickets.status, "used")))
+      .orderBy(desc(tickets.checkedInAt))
+      .limit(30);
+    return NextResponse.json({ recent: rows });
   }
 
   // Plan B: search by name or CPF.

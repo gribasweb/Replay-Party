@@ -32,6 +32,7 @@ export default function CheckinPage() {
   const [cameraError, setCameraError] = useState("");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchRow[]>([]);
+  const [recent, setRecent] = useState<{ id: string; name: string; tierName: string; checkedInAt: string | null }[]>([]);
 
   const pwRef = useRef("");
   const processingRef = useRef(false);
@@ -51,6 +52,11 @@ export default function CheckinPage() {
     if (r.ok) setStats({ total: r.data.total ?? 0, used: r.data.used ?? 0 });
   }, [post]);
 
+  const refreshRecent = useCallback(async () => {
+    const r = await post({ action: "recent" });
+    if (r.ok) setRecent(r.data.recent ?? []);
+  }, [post]);
+
   useEffect(() => {
     const saved = sessionStorage.getItem("checkin_pw");
     if (!saved) return;
@@ -64,6 +70,14 @@ export default function CheckinPage() {
       }
     });
   }, [post]);
+
+  // Lista de entradas ao vivo: atualiza sozinha (inclusive de outros aparelhos).
+  useEffect(() => {
+    if (!authed) return;
+    refreshRecent();
+    const iv = setInterval(refreshRecent, 15000);
+    return () => clearInterval(iv);
+  }, [authed, refreshRecent]);
 
   const login = async () => {
     setLoginError("");
@@ -102,9 +116,10 @@ export default function CheckinPage() {
       const r = await post({ action: "scan", token: text });
       setResult(r.data as Result);
       refreshStats();
+      refreshRecent();
       showResultThenClear();
     },
-    [post, refreshStats, showResultThenClear],
+    [post, refreshStats, refreshRecent, showResultThenClear],
   );
 
   useEffect(() => {
@@ -150,6 +165,7 @@ export default function CheckinPage() {
     const r = await post({ action: "redeem", ticketId: id });
     setResult(r.data as Result);
     refreshStats();
+    refreshRecent();
     doSearch();
     setTimeout(() => setResult(null), 3500);
   };
@@ -267,6 +283,25 @@ export default function CheckinPage() {
                 );
               })}
               {query && results.length === 0 && <p className="text-center text-sm text-ash">Nenhum ingresso encontrado.</p>}
+            </div>
+
+            {/* Últimas entradas — atualiza ao vivo a cada validação */}
+            <div className="mt-8">
+              <h2 className="font-mono text-xs tracking-widest text-violet uppercase">Últimas entradas</h2>
+              <div className="mt-3 space-y-2">
+                {recent.map((row) => (
+                  <div key={row.id} className="flex items-center justify-between gap-3 border border-grape/40 bg-coal/60 px-3 py-2.5" style={{ borderRadius: "var(--radius-stamp)" }}>
+                    <div className="min-w-0">
+                      <div className="truncate font-medium text-chalk">{row.name}</div>
+                      <div className="font-mono text-[11px] text-ash">{row.tierName}</div>
+                    </div>
+                    <span className="shrink-0 font-mono text-[11px] tracking-wider text-violet uppercase">
+                      {fmtTime(row.checkedInAt)}
+                    </span>
+                  </div>
+                ))}
+                {recent.length === 0 && <p className="text-center text-sm text-ash">Ninguém entrou ainda.</p>}
+              </div>
             </div>
           </div>
         )}
