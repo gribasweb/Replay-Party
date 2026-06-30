@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "motion/react";
-import { List, Ticket, X } from "@phosphor-icons/react";
+import { GridFour, List, Ticket, X } from "@phosphor-icons/react";
 
 const LINKS = [
   { label: "Início", href: "#inicio" },
@@ -51,13 +51,14 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <Link
-            href="/meus-ingressos"
-            className="hidden border border-grape px-5 py-2.5 text-sm font-bold tracking-wide text-chalk uppercase transition-colors hover:border-magenta hover:text-magenta sm:inline-block"
+          <a
+            href="#ingressos"
+            className="hidden items-center gap-2 border border-grape px-5 py-2.5 text-sm font-bold tracking-wide text-chalk uppercase transition-colors hover:border-magenta hover:text-magenta sm:inline-flex"
             style={{ borderRadius: "var(--radius-stamp)" }}
           >
-            Meus ingressos
-          </Link>
+            <GridFour weight="bold" className="h-4 w-4" />
+            Ver setores
+          </a>
           <a
             href="#ingressos"
             className="hidden bg-magenta px-5 py-2.5 text-sm font-bold tracking-wide text-ink uppercase transition-transform hover:-translate-y-0.5 active:translate-y-0 sm:inline-block"
