@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface Status {
   connected: boolean;
@@ -10,29 +10,26 @@ interface Status {
 }
 
 export default function AdminMpPage() {
-  const [key, setKey] = useState("");
+  const [password, setPassword] = useState("");
   const [authed, setAuthed] = useState(false);
   const [status, setStatus] = useState<Status | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [flash, setFlash] = useState("");
 
-  useEffect(() => {
-    const p = new URLSearchParams(window.location.search);
-    if (p.get("connected") === "1") {
-      setFlash("✅ Conta do organizador conectada com sucesso! O split de 15% já está ativo.");
-    } else if (p.get("error")) {
-      setFlash(`⚠️ Não foi possível concluir a conexão (${p.get("error")}). Tente de novo.`);
-    }
-  }, []);
-
-  const check = async (k: string) => {
+  const loadStatus = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const r = await fetch(`/api/mp/status?key=${encodeURIComponent(k)}`);
+      const r = await fetch("/api/mp/status");
       if (r.status === 401) {
-        setError("Senha incorreta.");
+        setAuthed(false);
+        setStatus(null);
+        return;
+      }
+      if (!r.ok) {
+        const data = await r.json().catch(() => ({}));
+        setError(data.error ?? "Erro ao consultar o status.");
         return;
       }
       const d = (await r.json()) as Status;
@@ -43,6 +40,50 @@ export default function AdminMpPage() {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      const p = new URLSearchParams(window.location.search);
+      if (p.get("connected") === "1") {
+        setFlash("Conta do organizador conectada com sucesso. O split de 15% ja esta ativo.");
+      } else if (p.get("error")) {
+        setFlash(`Nao foi possivel concluir a conexao (${p.get("error")}). Tente de novo.`);
+      }
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/operator/session")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.ok) loadStatus();
+      })
+      .catch(() => {});
+  }, [loadStatus]);
+
+  const login = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const r = await fetch("/api/operator/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      if (!r.ok) {
+        const data = await r.json().catch(() => ({}));
+        setError(data.error ?? "Senha incorreta.");
+        return;
+      }
+      setPassword("");
+      await loadStatus();
+    } catch {
+      setError("Erro ao verificar a senha.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -50,7 +91,7 @@ export default function AdminMpPage() {
       <div className="w-full max-w-md">
         <h1 className="font-display text-4xl text-chalk uppercase">Mercado Pago</h1>
         <p className="mt-2 text-sm text-ash">
-          Conexão da conta do organizador para o split de pagamentos (comissão de 15%).
+          Conexao da conta do organizador para o split de pagamentos (comissao de 15%).
         </p>
 
         {flash && (
@@ -66,14 +107,14 @@ export default function AdminMpPage() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              check(key);
+              login();
             }}
             className="mt-6 space-y-3"
           >
             <input
               type="password"
-              value={key}
-              onChange={(e) => setKey(e.target.value)}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="Senha de admin"
               className="w-full border border-grape bg-coal px-4 py-3 text-chalk placeholder:text-ash/40 focus:border-magenta focus:outline-none"
               style={{ borderRadius: "var(--radius-stamp)" }}
@@ -96,7 +137,7 @@ export default function AdminMpPage() {
             >
               {status?.connected ? (
                 <>
-                  <p className="font-display text-2xl text-chalk uppercase">✅ Conectado</p>
+                  <p className="font-display text-2xl text-chalk uppercase">Conectado</p>
                   <p className="mt-2 text-sm text-ash">
                     Conta do organizador (ID {status.mpUserId}) vinculada. A cada venda, 85% vai
                     para a conta dele e 15% para a sua, automaticamente.
@@ -104,17 +145,17 @@ export default function AdminMpPage() {
                 </>
               ) : (
                 <>
-                  <p className="font-display text-2xl text-chalk uppercase">Não conectado</p>
+                  <p className="font-display text-2xl text-chalk uppercase">Nao conectado</p>
                   <p className="mt-2 text-sm text-ash">
-                    Clique abaixo e faça login na conta Mercado Pago <strong>do organizador</strong>{" "}
-                    para ativar o split. (É o organizador quem precisa autorizar.)
+                    Clique abaixo e faca login na conta Mercado Pago do organizador para ativar o split.
                   </p>
                 </>
               )}
             </div>
 
+            {error && <p className="mt-3 text-xs text-magenta">{error}</p>}
             <a
-              href={`/api/mp/connect?key=${encodeURIComponent(key)}`}
+              href="/api/mp/connect"
               className="glow-magenta mt-5 block bg-magenta px-6 py-4 text-center text-sm font-bold tracking-wide text-ink uppercase"
               style={{ borderRadius: "var(--radius-stamp)" }}
             >

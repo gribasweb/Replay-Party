@@ -20,8 +20,11 @@ export function Hero() {
   // "respirar" junto com a barra do navegador que aparece/some.
   const [parallaxOn, setParallaxOn] = useState(false);
   useEffect(() => {
-    setMounted(true);
-    setParallaxOn(window.matchMedia("(min-width: 768px)").matches);
+    const id = window.setTimeout(() => {
+      setMounted(true);
+      setParallaxOn(window.matchMedia("(min-width: 768px)").matches);
+    }, 0);
+    return () => window.clearTimeout(id);
   }, []);
   const y = mounted && parallaxOn ? sceneY : "0%";
 

@@ -3,20 +3,15 @@ import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { orders, tickets } from "@/lib/db/schema";
 import { onlyDigits } from "@/lib/cpf";
+import { requireOperatorSession } from "@/lib/operator-session";
 
 export const runtime = "nodejs";
 
 interface CheckinBody {
-  password?: string;
   action?: "scan" | "redeem" | "search" | "stats" | "recent";
   token?: string;
   ticketId?: string;
   query?: string;
-}
-
-function passwordOk(pw: unknown) {
-  const expected = process.env.CHECKIN_PASSWORD ?? "";
-  return expected.length > 0 && pw === expected;
 }
 
 /** Accepts the raw QR text, which is a /ingresso/<token> URL, or a bare token. */
@@ -26,15 +21,14 @@ function extractToken(text: string) {
 }
 
 export async function POST(req: Request) {
+  const unauthorized = requireOperatorSession(req);
+  if (unauthorized) return unauthorized;
+
   let body: CheckinBody;
   try {
     body = (await req.json()) as CheckinBody;
   } catch {
     return NextResponse.json({ error: "Requisição inválida." }, { status: 400 });
-  }
-
-  if (!passwordOk(body.password)) {
-    return NextResponse.json({ error: "Senha incorreta." }, { status: 401 });
   }
 
   // Live counter of entries.

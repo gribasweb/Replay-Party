@@ -34,7 +34,6 @@ export default function CheckinPage() {
   const [results, setResults] = useState<SearchRow[]>([]);
   const [recent, setRecent] = useState<{ id: string; name: string; tierName: string; checkedInAt: string | null }[]>([]);
 
-  const pwRef = useRef("");
   const processingRef = useRef(false);
   const scannerRef = useRef<{ stop: () => Promise<void>; clear: () => void; pause: (b?: boolean) => void; resume: () => void } | null>(null);
 
@@ -42,9 +41,9 @@ export default function CheckinPage() {
     const res = await fetch("/api/checkin", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password: pwRef.current, ...payload }),
+      body: JSON.stringify(payload),
     });
-    return { ok: res.ok, data: await res.json().catch(() => ({})) };
+    return { ok: res.ok, status: res.status, data: await res.json().catch(() => ({})) };
   }, []);
 
   const refreshStats = useCallback(async () => {
@@ -58,15 +57,10 @@ export default function CheckinPage() {
   }, [post]);
 
   useEffect(() => {
-    const saved = sessionStorage.getItem("checkin_pw");
-    if (!saved) return;
-    pwRef.current = saved;
     post({ action: "stats" }).then((r) => {
       if (r.ok) {
         setAuthed(true);
         setStats({ total: r.data.total ?? 0, used: r.data.used ?? 0 });
-      } else {
-        sessionStorage.removeItem("checkin_pw");
       }
     });
   }, [post]);
@@ -74,21 +68,28 @@ export default function CheckinPage() {
   // Lista de entradas ao vivo: atualiza sozinha (inclusive de outros aparelhos).
   useEffect(() => {
     if (!authed) return;
-    refreshRecent();
+    const first = window.setTimeout(refreshRecent, 0);
     const iv = setInterval(refreshRecent, 15000);
-    return () => clearInterval(iv);
+    return () => {
+      window.clearTimeout(first);
+      clearInterval(iv);
+    };
   }, [authed, refreshRecent]);
 
   const login = async () => {
     setLoginError("");
-    pwRef.current = password;
-    const r = await post({ action: "stats" });
+    const r = await fetch("/api/operator/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
     if (r.ok) {
-      sessionStorage.setItem("checkin_pw", password);
       setAuthed(true);
-      setStats({ total: r.data.total ?? 0, used: r.data.used ?? 0 });
+      setPassword("");
+      refreshStats();
     } else {
-      setLoginError("Senha incorreta.");
+      const data = await r.json().catch(() => ({}));
+      setLoginError(data.error ?? "Senha incorreta.");
     }
   };
 
@@ -125,7 +126,7 @@ export default function CheckinPage() {
   useEffect(() => {
     if (!authed || mode !== "scan") return;
     let cancelled = false;
-    setCameraError("");
+    const resetError = window.setTimeout(() => setCameraError(""), 0);
     (async () => {
       const { Html5Qrcode } = await import("html5-qrcode");
       if (cancelled) return;
@@ -144,6 +145,7 @@ export default function CheckinPage() {
     })();
     return () => {
       cancelled = true;
+      window.clearTimeout(resetError);
       const s = scannerRef.current;
       scannerRef.current = null;
       if (s) {

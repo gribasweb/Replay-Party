@@ -1,10 +1,11 @@
-import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
+import { NextResponse } from "next/server";
+import { baseUrlFromRequest } from "@/lib/base-url";
 import { db } from "@/lib/db";
 import { lots, orders, tickets } from "@/lib/db/schema";
 import { fulfillOrder } from "@/lib/fulfill";
-import { baseUrlFromRequest } from "@/lib/base-url";
+import { requireOperatorSession } from "@/lib/operator-session";
 
 export const runtime = "nodejs";
 
@@ -14,16 +15,9 @@ interface Person {
   email: string;
 }
 
-/**
- * Emissão de cortesias (convidados): cria um pedido por pessoa, sem cobrança,
- * e dispara o e-mail do ingresso reutilizando o mesmo fluxo das compras reais
- * (`fulfillOrder` → `sendTicketEmail`). Protegido pela senha de admin (?key=).
- */
 export async function POST(req: Request) {
-  const key = new URL(req.url).searchParams.get("key") ?? "";
-  if (!process.env.CHECKIN_PASSWORD || key !== process.env.CHECKIN_PASSWORD) {
-    return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
-  }
+  const unauthorized = requireOperatorSession(req);
+  if (unauthorized) return unauthorized;
 
   const body = (await req.json().catch(() => null)) as { lotId?: string; people?: Person[] } | null;
   if (!body?.lotId || !Array.isArray(body.people) || body.people.length === 0) {
@@ -31,7 +25,7 @@ export async function POST(req: Request) {
   }
 
   const [lot] = await db.select().from(lots).where(eq(lots.id, body.lotId));
-  if (!lot) return NextResponse.json({ error: "Lote não encontrado." }, { status: 400 });
+  if (!lot) return NextResponse.json({ error: "Lote nao encontrado." }, { status: 400 });
 
   const baseUrl = baseUrlFromRequest(req);
   const results: { name: string; email: string; orderId: string }[] = [];
@@ -62,7 +56,6 @@ export async function POST(req: Request) {
       qrToken: randomUUID(),
     });
 
-    // Marca como pago e envia o e-mail (mesmo caminho das compras reais).
     await fulfillOrder(order.id, { method: "cortesia", baseUrl });
     results.push({ name: person.name, email: person.email, orderId: order.id });
   }

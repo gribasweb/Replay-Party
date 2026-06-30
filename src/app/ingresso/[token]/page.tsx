@@ -4,7 +4,7 @@ import QRCode from "qrcode";
 import { eq } from "drizzle-orm";
 import { CalendarBlank, CheckCircle, MapPin, XCircle } from "@phosphor-icons/react/dist/ssr";
 import { db } from "@/lib/db";
-import { tickets } from "@/lib/db/schema";
+import { orders, tickets } from "@/lib/db/schema";
 import { EVENT } from "@/lib/event";
 import { onlyDigits } from "@/lib/cpf";
 import { baseUrlFromHeaders } from "@/lib/base-url";
@@ -20,14 +20,19 @@ const maskCpf = (cpf: string) => {
 export default async function IngressoPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
 
-  let ticket = null;
+  let row: { tickets: typeof tickets.$inferSelect; orders: typeof orders.$inferSelect } | null = null;
   try {
-    [ticket] = await db.select().from(tickets).where(eq(tickets.qrToken, token));
+    const rows = await db
+      .select()
+      .from(tickets)
+      .innerJoin(orders, eq(tickets.orderId, orders.id))
+      .where(eq(tickets.qrToken, token));
+    row = rows[0] ?? null;
   } catch {
-    ticket = null;
+    row = null;
   }
 
-  if (!ticket) {
+  if (!row) {
     return (
       <main className="grid min-h-[100dvh] place-items-center bg-ink px-5 text-center">
         <div>
@@ -39,6 +44,19 @@ export default async function IngressoPage({ params }: { params: Promise<{ token
     );
   }
 
+  if (row.orders.status !== "paid") {
+    return (
+      <main className="grid min-h-[100dvh] place-items-center bg-ink px-5 text-center">
+        <div>
+          <XCircle weight="fill" className="mx-auto h-14 w-14 text-magenta" />
+          <h1 className="mt-4 font-display text-4xl text-chalk uppercase">Ingresso nao confirmado</h1>
+          <p className="mt-2 text-ash">Este ingresso ainda nao foi confirmado para entrada.</p>
+        </div>
+      </main>
+    );
+  }
+
+  const ticket = row.tickets;
   const used = ticket.status === "used";
   const cancelled = ticket.status === "cancelled";
   const baseUrl = await baseUrlFromHeaders();

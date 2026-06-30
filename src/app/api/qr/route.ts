@@ -1,5 +1,8 @@
 import QRCode from "qrcode";
+import { and, eq } from "drizzle-orm";
 import { baseUrlFromRequest } from "@/lib/base-url";
+import { db } from "@/lib/db";
+import { orders, tickets } from "@/lib/db/schema";
 
 export const runtime = "nodejs";
 
@@ -7,6 +10,14 @@ export const runtime = "nodejs";
 export async function GET(req: Request) {
   const token = new URL(req.url).searchParams.get("token");
   if (!token) return new Response("token ausente", { status: 400 });
+
+  const [ticket] = await db
+    .select({ id: tickets.id })
+    .from(tickets)
+    .innerJoin(orders, eq(tickets.orderId, orders.id))
+    .where(and(eq(tickets.qrToken, token), eq(orders.status, "paid")))
+    .limit(1);
+  if (!ticket) return new Response("ingresso nao confirmado", { status: 404 });
 
   const baseUrl = baseUrlFromRequest(req);
   const png = await QRCode.toBuffer(`${baseUrl}/ingresso/${token}`, {

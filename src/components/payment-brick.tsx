@@ -34,7 +34,8 @@ export function PaymentBrick({
   useEffect(() => {
     if (publicKey) {
       initMercadoPago(publicKey, { locale: "pt-BR" });
-      setReady(true);
+      const id = window.setTimeout(() => setReady(true), 0);
+      return () => window.clearTimeout(id);
     }
   }, [publicKey]);
 

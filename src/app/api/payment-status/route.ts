@@ -27,12 +27,12 @@ export async function GET(req: Request) {
       const payment = await client.get({ id: order.mpPaymentId });
       if (payment.status === "approved") {
         const baseUrl = baseUrlFromRequest(req);
-        await fulfillOrder(orderId, {
+        const fulfilled = await fulfillOrder(orderId, {
           paymentId: order.mpPaymentId,
           method: order.paymentMethod ?? "pix",
           baseUrl,
         });
-        return NextResponse.json({ status: "paid" });
+        return NextResponse.json({ status: fulfilled ? "paid" : order.expiresAt < new Date() ? "expired" : order.status });
       }
       return NextResponse.json({ status: payment.status ?? "pending" });
     } catch (e) {

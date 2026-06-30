@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
 import { getVendorCredentials } from "@/lib/mp-vendor";
+import { requireOperatorSession } from "@/lib/operator-session";
 
 export const runtime = "nodejs";
 
-/** Status da conexão da conta do organizador. Protegido pela senha de admin. */
 export async function GET(req: Request) {
-  const key = new URL(req.url).searchParams.get("key") ?? "";
-  if (!process.env.CHECKIN_PASSWORD || key !== process.env.CHECKIN_PASSWORD) {
-    return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
-  }
+  const unauthorized = requireOperatorSession(req);
+  if (unauthorized) return unauthorized;
 
   const cred = await getVendorCredentials();
   return NextResponse.json({

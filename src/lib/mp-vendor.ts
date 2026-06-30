@@ -2,6 +2,7 @@ import "server-only";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { mpCredentials, type MpCredentials } from "@/lib/db/schema";
+import { decryptSecret, encryptSecret } from "@/lib/secret-box";
 
 /**
  * Split de Pagamentos (marketplace) do Mercado Pago.
@@ -66,8 +67,8 @@ async function persist(t: MpTokenResponse): Promise<MpCredentials> {
   const values = {
     id: "vendor",
     mpUserId: t.user_id != null ? String(t.user_id) : null,
-    accessToken: t.access_token,
-    refreshToken: t.refresh_token ?? null,
+    accessToken: encryptSecret(t.access_token),
+    refreshToken: t.refresh_token ? encryptSecret(t.refresh_token) : null,
     publicKey: t.public_key ?? null,
     expiresAt,
     updatedAt: new Date(),
@@ -77,12 +78,20 @@ async function persist(t: MpTokenResponse): Promise<MpCredentials> {
     .values(values)
     .onConflictDoUpdate({ target: mpCredentials.id, set: values })
     .returning();
-  return row;
+  return decryptCredentials(row);
+}
+
+function decryptCredentials(row: MpCredentials): MpCredentials {
+  return {
+    ...row,
+    accessToken: decryptSecret(row.accessToken),
+    refreshToken: row.refreshToken ? decryptSecret(row.refreshToken) : null,
+  };
 }
 
 export async function getVendorCredentials(): Promise<MpCredentials | null> {
   const [row] = await db.select().from(mpCredentials).where(eq(mpCredentials.id, "vendor"));
-  return row ?? null;
+  return row ? decryptCredentials(row) : null;
 }
 
 /**

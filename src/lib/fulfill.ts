@@ -1,4 +1,4 @@
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq, gt } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { orders, tickets } from "@/lib/db/schema";
 import { sendTicketEmail } from "@/lib/email";
@@ -11,15 +11,16 @@ import { sendTicketEmail } from "@/lib/email";
 export async function fulfillOrder(
   orderId: string,
   opts: { paymentId?: string; method?: string; baseUrl: string },
-): Promise<void> {
+): Promise<boolean> {
+  const now = new Date();
   const updated = await db
     .update(orders)
     .set({ status: "paid", mpPaymentId: opts.paymentId, paymentMethod: opts.method })
-    .where(and(eq(orders.id, orderId), ne(orders.status, "paid")))
+    .where(and(eq(orders.id, orderId), eq(orders.status, "pending"), gt(orders.expiresAt, now)))
     .returning({ email: orders.buyerEmail, name: orders.buyerName });
 
-  // Empty => was already paid (or doesn't exist): don't resend the e-mail.
-  if (updated.length === 0) return;
+  // Empty => already paid, expired, cancelled, or missing: don't issue tickets.
+  if (updated.length === 0) return false;
 
   const order = updated[0];
   const ticketRows = await db
@@ -44,4 +45,5 @@ export async function fulfillOrder(
     // O envio nunca deve quebrar a emissão (o pedido já está pago), mas logamos.
     console.error(`[fulfill] erro inesperado no e-mail (pedido ${orderId}):`, e);
   }
+  return true;
 }

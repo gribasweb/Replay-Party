@@ -13,7 +13,7 @@ interface TicketRow {
 }
 
 const STATUS: Record<string, { label: string; cls: string }> = {
-  valid: { label: "Válido", cls: "border-violet/40 bg-violet/10 text-violet" },
+  valid: { label: "Valido", cls: "border-violet/40 bg-violet/10 text-violet" },
   used: { label: "Utilizado", cls: "border-amber-500/40 bg-amber-500/10 text-amber-400" },
   cancelled: { label: "Cancelado", cls: "border-ash/40 bg-ash/10 text-ash" },
 };
@@ -21,14 +21,25 @@ const STATUS: Record<string, { label: string; cls: string }> = {
 export default function MeusIngressosPage() {
   const [email, setEmail] = useState("");
   const [cpf, setCpf] = useState("");
+  const [code, setCode] = useState("");
+  const [codeRequested, setCodeRequested] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const [tickets, setTickets] = useState<TicketRow[] | null>(null);
 
-  const submit = async () => {
+  const resetLookup = () => {
+    setCodeRequested(false);
+    setCode("");
+    setTickets(null);
+    setMessage("");
+  };
+
+  const requestCode = async () => {
     setError("");
+    setMessage("");
     if (!email.trim() || !isValidCPF(cpf)) {
-      setError("Informe um e-mail e um CPF válidos.");
+      setError("Informe um e-mail e um CPF validos.");
       return;
     }
     setLoading(true);
@@ -40,15 +51,53 @@ export default function MeusIngressosPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Não foi possível buscar.");
+        setError(data.error ?? "Nao foi possivel enviar o codigo.");
+        return;
+      }
+      setCodeRequested(true);
+      setTickets(null);
+      setMessage("Se os dados estiverem corretos, enviamos um codigo para o e-mail do comprador.");
+    } catch {
+      setError("Erro de conexao. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyCode = async () => {
+    setError("");
+    setMessage("");
+    if (code.replace(/\D/g, "").length !== 6) {
+      setError("Informe o codigo de 6 digitos.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch("/api/meus-ingressos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, cpf, code }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Nao foi possivel buscar.");
         setTickets(null);
         return;
       }
       setTickets(data.tickets ?? []);
+      setCodeRequested(false);
     } catch {
-      setError("Erro de conexão. Tente novamente.");
+      setError("Erro de conexao. Tente novamente.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const submit = () => {
+    if (codeRequested) {
+      verifyCode();
+    } else {
+      requestCode();
     }
   };
 
@@ -58,7 +107,7 @@ export default function MeusIngressosPage() {
         <div className="mx-auto flex h-16 max-w-xl items-center justify-between px-5">
           <Link href="/" className="flex items-center gap-2 text-sm text-ash hover:text-chalk">
             <ArrowLeft weight="bold" className="h-4 w-4" />
-            Início
+            Inicio
           </Link>
           <span className="font-display text-lg tracking-wide text-chalk">
             REPLAY<span className="text-magenta">PARTY</span>
@@ -69,7 +118,8 @@ export default function MeusIngressosPage() {
       <div className="mx-auto max-w-xl px-5 py-10">
         <h1 className="font-display text-4xl text-chalk uppercase sm:text-5xl">Meus ingressos</h1>
         <p className="mt-3 text-ash">
-          Consulte com o <strong className="text-chalk">e-mail</strong> e o <strong className="text-chalk">CPF do comprador</strong> usados na compra.
+          Consulte com o <strong className="text-chalk">e-mail</strong> e o{" "}
+          <strong className="text-chalk">CPF do comprador</strong> usados na compra.
         </p>
 
         <div className="mt-8 grid gap-4">
@@ -79,7 +129,10 @@ export default function MeusIngressosPage() {
               type="email"
               inputMode="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                resetLookup();
+              }}
               placeholder="voce@email.com"
               className="w-full border border-grape bg-coal px-4 py-3 text-chalk placeholder:text-ash/40 focus:border-magenta focus:outline-none"
               style={{ borderRadius: "var(--radius-stamp)" }}
@@ -91,7 +144,10 @@ export default function MeusIngressosPage() {
               inputMode="numeric"
               maxLength={14}
               value={cpf}
-              onChange={(e) => setCpf(formatCPF(e.target.value))}
+              onChange={(e) => {
+                setCpf(formatCPF(e.target.value));
+                resetLookup();
+              }}
               onKeyDown={(e) => e.key === "Enter" && submit()}
               placeholder="000.000.000-00"
               className="w-full border border-grape bg-coal px-4 py-3 text-chalk placeholder:text-ash/40 focus:border-magenta focus:outline-none"
@@ -99,6 +155,23 @@ export default function MeusIngressosPage() {
             />
           </label>
 
+          {codeRequested && (
+            <label className="block">
+              <span className="mb-1.5 block font-mono text-[11px] tracking-widest text-ash uppercase">Codigo</span>
+              <input
+                inputMode="numeric"
+                maxLength={6}
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onKeyDown={(e) => e.key === "Enter" && verifyCode()}
+                placeholder="000000"
+                className="w-full border border-grape bg-coal px-4 py-3 text-center font-mono text-xl tracking-[0.35em] text-chalk placeholder:text-ash/40 focus:border-magenta focus:outline-none"
+                style={{ borderRadius: "var(--radius-stamp)" }}
+              />
+            </label>
+          )}
+
+          {message && <p className="text-sm text-ash">{message}</p>}
           {error && <p className="text-sm text-magenta">{error}</p>}
 
           <button
@@ -109,7 +182,7 @@ export default function MeusIngressosPage() {
             style={{ borderRadius: "var(--radius-stamp)" }}
           >
             <MagnifyingGlass weight="bold" className="h-5 w-5" />
-            {loading ? "Buscando..." : "Buscar ingressos"}
+            {loading ? "Aguarde..." : codeRequested ? "Ver ingressos" : "Enviar codigo"}
           </button>
         </div>
 
@@ -163,7 +236,7 @@ export default function MeusIngressosPage() {
             href="/checkin"
             className="font-mono text-[11px] tracking-widest text-ash/70 uppercase transition-colors hover:text-magenta"
           >
-            Acesso da equipe · Portaria →
+            Acesso da equipe - Portaria
           </Link>
         </div>
       </div>

@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { CalendarBlank, MapPin } from "@phosphor-icons/react/dist/ssr";
 import { db } from "@/lib/db";
 import { orders, tickets } from "@/lib/db/schema";
-import { EVENT, brl } from "@/lib/event";
+import { EVENT } from "@/lib/event";
 import { onlyDigits } from "@/lib/cpf";
 import { baseUrlFromHeaders } from "@/lib/base-url";
 import { SuccessCelebration } from "@/components/success-celebration";
@@ -26,18 +26,52 @@ export default async function PedidoPage({ params }: { params: Promise<{ id: str
   let ticketRows: (typeof tickets.$inferSelect)[] = [];
   try {
     [order] = await db.select().from(orders).where(eq(orders.id, id));
-    if (order) {
+    if (order?.status === "paid") {
       ticketRows = await db.select().from(tickets).where(eq(tickets.orderId, id));
     }
   } catch {
     order = null;
   }
 
-  if (!order || ticketRows.length === 0) {
+  if (!order) {
     return (
       <main className="grid min-h-[100dvh] place-items-center bg-ink px-5 text-center">
         <div>
           <h1 className="font-display text-4xl text-chalk uppercase">Pedido não encontrado</h1>
+          <Link href="/#ingressos" className="mt-6 inline-block bg-magenta px-6 py-3 text-sm font-bold tracking-wide text-ink uppercase" style={{ borderRadius: "var(--radius-stamp)" }}>
+            Ver ingressos
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  if (order.status !== "paid") {
+    const expired = order.expiresAt < new Date();
+    return (
+      <main className="grid min-h-[100dvh] place-items-center bg-ink px-5 text-center">
+        <div className="max-w-sm">
+          <h1 className="font-display text-4xl text-chalk uppercase">
+            {expired ? "Reserva expirada" : "Pagamento pendente"}
+          </h1>
+          <p className="mt-3 text-sm text-ash">
+            {expired
+              ? "Esse pedido nao foi confirmado dentro do prazo. Faca uma nova compra para emitir os ingressos."
+              : "Os ingressos aparecem aqui assim que o pagamento for confirmado."}
+          </p>
+          <Link href="/#ingressos" className="mt-6 inline-block bg-magenta px-6 py-3 text-sm font-bold tracking-wide text-ink uppercase" style={{ borderRadius: "var(--radius-stamp)" }}>
+            Ver ingressos
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  if (ticketRows.length === 0) {
+    return (
+      <main className="grid min-h-[100dvh] place-items-center bg-ink px-5 text-center">
+        <div>
+          <h1 className="font-display text-4xl text-chalk uppercase">Pedido nao encontrado</h1>
           <Link href="/#ingressos" className="mt-6 inline-block bg-magenta px-6 py-3 text-sm font-bold tracking-wide text-ink uppercase" style={{ borderRadius: "var(--radius-stamp)" }}>
             Ver ingressos
           </Link>

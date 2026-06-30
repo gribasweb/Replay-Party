@@ -79,11 +79,14 @@ export async function POST(req: Request) {
     });
 
     if (result.status === "approved") {
-      await fulfillOrder(orderId, {
+      const fulfilled = await fulfillOrder(orderId, {
         paymentId: String(result.id),
         method: formData.payment_method_id,
         baseUrl,
       });
+      if (!fulfilled) {
+        return NextResponse.json({ error: "Sua reserva expirou. RefaÃ§a o pedido." }, { status: 409 });
+      }
       return NextResponse.json({ status: "approved", orderId });
     }
 

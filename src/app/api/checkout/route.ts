@@ -4,10 +4,19 @@ import { and, eq, gt, inArray, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { lots, orders, tickets } from "@/lib/db/schema";
 import { checkoutSchema } from "@/lib/checkout-schema";
+import { clientKey, rateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
+  const limited = rateLimit(clientKey(req, "checkout"), { limit: 8, windowMs: 10 * 60 * 1000 });
+  if (!limited.ok) {
+    return NextResponse.json(
+      { error: "Muitas tentativas. Tente novamente em alguns minutos." },
+      { status: 429, headers: { "Retry-After": String(limited.retryAfter) } },
+    );
+  }
+
   let body: unknown;
   try {
     body = await req.json();

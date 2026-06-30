@@ -81,7 +81,7 @@ function buildHtml(opts: { buyerName: string; orderId: string; tickets: TicketLi
           <p style="color:#aa9fb8;font-size:12px;margin-top:22px;line-height:1.5;">
             Você também pode consultar a qualquer momento em
             <a href="${opts.baseUrl}/meus-ingressos" style="color:#f90a79;">${opts.baseUrl}/meus-ingressos</a>
-            com seu e-mail e CPF.
+            com seu e-mail, CPF e codigo de verificacao.
           </p>
         </td>
       </tr>
@@ -104,6 +104,53 @@ export async function sendTicketEmail(opts: {
       to: opts.to,
       subject: `Seu ingresso para a ${EVENT.name}`,
       html: buildHtml(opts),
+    });
+    if (error) return { sent: false, reason: error.message };
+    return { sent: true };
+  } catch (e) {
+    return { sent: false, reason: e instanceof Error ? e.message : "erro" };
+  }
+}
+
+function buildLookupCodeHtml(code: string) {
+  return `
+  <div style="background:#040406;padding:28px 12px;font-family:Arial,Helvetica,sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="max-width:480px;margin:0 auto;background:#160a1d;border:1px solid #310037;border-radius:8px;overflow:hidden;">
+      <tr>
+        <td style="background:linear-gradient(120deg,#7e03d8,#f90a79);padding:20px 24px;">
+          <span style="font-size:22px;font-weight:bold;letter-spacing:1px;color:#ffffff;">REPLAY PARTY</span>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:24px;">
+          <h1 style="font-size:22px;margin:0 0 8px;color:#efebef;">Codigo para acessar seus ingressos</h1>
+          <p style="color:#aa9fb8;margin:0 0 20px;font-size:14px;line-height:1.5;">
+            Use este codigo para concluir a consulta dos seus ingressos. Ele expira em 10 minutos.
+          </p>
+          <div style="font-size:32px;font-weight:bold;letter-spacing:8px;color:#ffffff;background:#0a0710;border:1px solid #310037;padding:18px;text-align:center;border-radius:6px;">
+            ${esc(code)}
+          </div>
+          <p style="color:#aa9fb8;font-size:12px;margin-top:22px;line-height:1.5;">
+            Se voce nao solicitou esse codigo, pode ignorar este e-mail.
+          </p>
+        </td>
+      </tr>
+    </table>
+  </div>`;
+}
+
+export async function sendLookupCodeEmail(opts: {
+  to: string;
+  code: string;
+}): Promise<{ sent: boolean; reason?: string }> {
+  if (!apiKey) return { sent: false, reason: "RESEND_API_KEY ausente" };
+  try {
+    const resend = new Resend(apiKey);
+    const { error } = await resend.emails.send({
+      from,
+      to: opts.to,
+      subject: `Codigo para acessar seus ingressos - ${EVENT.name}`,
+      html: buildLookupCodeHtml(opts.code),
     });
     if (error) return { sent: false, reason: error.message };
     return { sent: true };
