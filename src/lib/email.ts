@@ -34,7 +34,13 @@ function ticketCard(t: TicketLine, index: number, total: number, baseUrl: string
       <td style="padding:16px;">
         <table cellpadding="0" cellspacing="0" role="presentation"><tr>
           <td style="vertical-align:middle;">
-            <img src="${baseUrl}/api/qr?token=${encodeURIComponent(t.qrToken)}" width="116" height="116" alt="QR Code do ingresso" style="display:block;background:#ffffff;padding:6px;border-radius:4px;" />
+            <table cellpadding="0" cellspacing="0" role="presentation" bgcolor="#ffffff" style="background:#ffffff;border-radius:6px;">
+              <tr>
+                <td bgcolor="#ffffff" align="center" style="background:#ffffff;padding:8px;border-radius:6px;line-height:0;font-size:0;">
+                  <img src="${baseUrl}/api/qr?token=${encodeURIComponent(t.qrToken)}" width="120" height="120" alt="QR Code do ingresso" style="display:block;width:120px;height:120px;border:0;background:#ffffff;" />
+                </td>
+              </tr>
+            </table>
           </td>
           <td style="padding-left:16px;vertical-align:middle;">
             <div style="font-size:10px;color:#aa9fb8;letter-spacing:2px;text-transform:uppercase;">Participante</div>
@@ -75,6 +81,9 @@ function buildHtml(opts: { buyerName: string; orderId: string; tickets: TicketLi
 
           ${cards}
 
+          <p style="color:#aa9fb8;font-size:12px;margin:0 0 14px;line-height:1.5;">
+            Não está vendo o QR Code acima? Alguns apps de e-mail escondem imagens no modo escuro. Toque no botão abaixo para abrir o ingresso online, com o QR sempre visível.
+          </p>
           <a href="${opts.baseUrl}/pedido/${opts.orderId}" style="display:inline-block;background:#f90a79;color:#040406;text-decoration:none;font-weight:bold;padding:14px 28px;border-radius:4px;margin-top:8px;">
             Ver meus ingressos online
           </a>
