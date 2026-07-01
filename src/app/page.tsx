@@ -6,6 +6,7 @@ import { Tickets } from "@/components/tickets";
 import { HowItWorks } from "@/components/how-it-works";
 import { WhyOnline } from "@/components/why-online";
 import { Rules } from "@/components/rules";
+import { EventDay } from "@/components/event-day";
 import { SiteFooter } from "@/components/site-footer";
 import { tiersForDate } from "@/lib/event";
 
@@ -25,6 +26,7 @@ export default function Home() {
         <HowItWorks />
         <WhyOnline />
         <Rules />
+        <EventDay />
       </main>
       <SiteFooter />
     </>
