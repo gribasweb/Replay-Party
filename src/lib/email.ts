@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import QRCode from "qrcode";
 import { EVENT } from "@/lib/event";
 
 const apiKey = process.env.RESEND_API_KEY ?? "";
@@ -19,7 +20,10 @@ interface TicketLine {
 
 const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(EVENT.venue.mapsQuery)}`;
 
-function ticketCard(t: TicketLine, index: number, total: number, baseUrl: string) {
+/** cid do QR embutido (inline attachment) deste ingresso. */
+const qrCid = (token: string) => `qr-${token}`;
+
+function ticketCard(t: TicketLine, index: number, total: number) {
   return `
   <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#0a0710;border:1px solid #310037;border-radius:6px;overflow:hidden;margin-bottom:12px;">
     <tr>
@@ -37,7 +41,7 @@ function ticketCard(t: TicketLine, index: number, total: number, baseUrl: string
             <table cellpadding="0" cellspacing="0" role="presentation" bgcolor="#ffffff" style="background:#ffffff;border-radius:6px;">
               <tr>
                 <td bgcolor="#ffffff" align="center" style="background:#ffffff;padding:8px;border-radius:6px;line-height:0;font-size:0;">
-                  <img src="${baseUrl}/api/qr?token=${encodeURIComponent(t.qrToken)}" width="120" height="120" alt="QR Code do ingresso" style="display:block;width:120px;height:120px;border:0;background:#ffffff;" />
+                  <img src="cid:${qrCid(t.qrToken)}" width="120" height="120" alt="QR Code do ingresso" style="display:block;width:120px;height:120px;border:0;background:#ffffff;" />
                 </td>
               </tr>
             </table>
@@ -54,7 +58,7 @@ function ticketCard(t: TicketLine, index: number, total: number, baseUrl: string
 }
 
 function buildHtml(opts: { buyerName: string; orderId: string; tickets: TicketLine[]; baseUrl: string }) {
-  const cards = opts.tickets.map((t, i) => ticketCard(t, i, opts.tickets.length, opts.baseUrl)).join("");
+  const cards = opts.tickets.map((t, i) => ticketCard(t, i, opts.tickets.length)).join("");
   const plural = opts.tickets.length > 1;
 
   return `
@@ -82,7 +86,7 @@ function buildHtml(opts: { buyerName: string; orderId: string; tickets: TicketLi
           ${cards}
 
           <p style="color:#aa9fb8;font-size:12px;margin:0 0 14px;line-height:1.5;">
-            Não está vendo o QR Code acima? Alguns apps de e-mail escondem imagens no modo escuro. Toque no botão abaixo para abrir o ingresso online, com o QR sempre visível.
+            Se o QR Code acima não aparecer no seu app, toque no botão abaixo para abrir o ingresso online, com o QR sempre visível.
           </p>
           <a href="${opts.baseUrl}/pedido/${opts.orderId}" style="display:inline-block;background:#f90a79;color:#040406;text-decoration:none;font-weight:bold;padding:14px 28px;border-radius:4px;margin-top:8px;">
             Ver meus ingressos online
@@ -108,11 +112,28 @@ export async function sendTicketEmail(opts: {
   if (!apiKey) return { sent: false, reason: "RESEND_API_KEY ausente" };
   try {
     const resend = new Resend(apiKey);
+    // QR embutido no e-mail (inline attachment) em vez de imagem externa: aparece na
+    // hora, sem depender de baixar de um link (falhava em 3G/conexao lenta e no modo
+    // escuro de alguns apps, mostrando um quadrado preto ate carregar).
+    const attachments = await Promise.all(
+      opts.tickets.map(async (t, i) => ({
+        filename: `ingresso-${i + 1}.png`,
+        content: (
+          await QRCode.toBuffer(`${opts.baseUrl}/ingresso/${t.qrToken}`, {
+            margin: 2,
+            width: 320,
+            color: { dark: "#040406", light: "#ffffff" },
+          })
+        ).toString("base64"),
+        contentId: qrCid(t.qrToken),
+      })),
+    );
     const { error } = await resend.emails.send({
       from,
       to: opts.to,
       subject: `Seu ingresso para a ${EVENT.name}`,
       html: buildHtml(opts),
+      attachments,
     });
     if (error) return { sent: false, reason: error.message };
     return { sent: true };
