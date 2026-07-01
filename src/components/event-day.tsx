@@ -31,7 +31,7 @@ const NOT_ALLOWED: string[] = [
 
 export function EventDay() {
   return (
-    <section id="regulamento" className="scroll-mt-20 border-t border-grape/50 bg-ink py-20 lg:py-28">
+    <section id="regulamento" className="scroll-mt-20 border-t border-grape/50 bg-coal py-20 lg:py-28">
       <div className="mx-auto max-w-[1400px] px-5 lg:px-8">
         <Reveal>
           <h2 className="font-display text-5xl leading-none text-chalk uppercase sm:text-6xl">
@@ -85,7 +85,7 @@ export function EventDay() {
         {/* Aviso */}
         <Reveal delay={0.15}>
           <div
-            className="mt-12 flex items-start gap-4 border border-grape/60 bg-coal px-6 py-5"
+            className="mt-12 flex items-start gap-4 border border-grape/60 bg-plum px-6 py-5"
             style={{ borderRadius: "var(--radius-stamp)" }}
           >
             <ShieldWarning weight="duotone" className="h-8 w-8 shrink-0 text-magenta" />

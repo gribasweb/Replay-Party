@@ -25,8 +25,8 @@ export default function Home() {
         <Tickets tiers={tiers} />
         <HowItWorks />
         <WhyOnline />
-        <Rules />
         <EventDay />
+        <Rules />
       </main>
       <SiteFooter />
     </>

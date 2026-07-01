@@ -51,7 +51,7 @@ export function Rules() {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <section id="regras" className="scroll-mt-20 border-t border-grape/50 bg-coal py-20 lg:py-28">
+    <section id="regras" className="scroll-mt-20 border-t border-grape/50 bg-ink py-20 lg:py-28">
       <div className="mx-auto max-w-3xl px-5 lg:px-8">
         <Reveal>
           <h2 className="font-display text-5xl leading-none text-chalk uppercase sm:text-6xl">
