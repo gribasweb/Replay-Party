@@ -209,7 +209,9 @@ export default function AdminVendasPage() {
               {data && data.orders.length === 0 ? "Nenhuma compra ainda." : "Nada encontrado."}
             </p>
           ) : (
-            filtered.map((o) => (
+            filtered.map((o) => {
+              const tiers = [...new Set(o.participants.map((p) => p.tier))];
+              return (
               <article
                 key={o.id}
                 className="border border-grape bg-plum p-4"
@@ -217,7 +219,20 @@ export default function AdminVendasPage() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="truncate font-display text-xl leading-tight text-chalk">{o.name}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="min-w-0 truncate font-display text-xl leading-tight text-chalk">{o.name}</span>
+                      {tiers.map((t) => (
+                        <span
+                          key={t}
+                          className={`shrink-0 px-2 py-0.5 font-mono text-[10px] font-bold tracking-widest uppercase ${
+                            t === "VIP" ? "bg-magenta/20 text-magenta" : "bg-violet/20 text-violet"
+                          }`}
+                          style={{ borderRadius: "var(--radius-stamp)" }}
+                        >
+                          {t}
+                        </span>
+                      ))}
+                    </div>
                     <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 font-mono text-xs text-ash">
                       <span className="truncate">{o.email}</span>
                       {o.whatsapp && (
@@ -263,7 +278,8 @@ export default function AdminVendasPage() {
                   </ul>
                 </div>
               </article>
-            ))
+              );
+            })
           )}
         </div>
 
