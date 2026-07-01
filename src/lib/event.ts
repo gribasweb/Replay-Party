@@ -23,7 +23,7 @@ export interface TicketTier {
   tagline: string;
   accent: "violet" | "magenta";
   perks: string[];
-  /** Stock available per lot (from the briefing: 75 per lot). */
+  /** Stock available per lot. */
   perLotStock: number;
   lots: Lot[];
 }
@@ -61,7 +61,7 @@ export const TICKETS: TicketTier[] = [
     name: "Pista",
     tagline: "A energia da festa",
     accent: "violet",
-    perLotStock: 75,
+    perLotStock: 250,
     perks: ["Acesso à pista", "Open bar", "Dois DJs a noite toda"],
     lots: [
       { n: 1, label: "1º Lote", price: 30, window: "até 10/07", endsAt: "2026-07-10T23:59:59-03:00", status: "active" },
@@ -74,7 +74,7 @@ export const TICKETS: TicketTier[] = [
     name: "VIP",
     tagline: "A experiência completa",
     accent: "magenta",
-    perLotStock: 75,
+    perLotStock: 250,
     perks: ["Área VIP exclusiva", "Open bar", "Open food", "Dois DJs a noite toda"],
     lots: [
       { n: 1, label: "1º Lote", price: 80, window: "até 10/07", endsAt: "2026-07-10T23:59:59-03:00", status: "active" },
