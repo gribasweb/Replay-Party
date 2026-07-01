@@ -8,7 +8,7 @@ import {
   IdentificationCard,
   ArrowsLeftRight,
   Storefront,
-  WhatsappLogo,
+  EnvelopeSimple,
   ArrowCounterClockwise,
   type Icon,
 } from "@phosphor-icons/react";
@@ -18,12 +18,12 @@ const FAQ: { icon: Icon; q: string; a: string }[] = [
   {
     icon: IdentificationCard,
     q: "Idade mínima: 16 anos",
-    a: "A entrada é permitida a partir de 16 anos. Na portaria, todos recebem uma pulseira de identificação por faixa etária — bebida alcoólica é servida apenas para maiores de 18 anos. Leve um documento oficial com foto.",
+    a: "A entrada é permitida a partir de 16 anos. Na portaria, todos recebem uma pulseira de identificação por faixa etária; bebida alcoólica é servida apenas para maiores de 18 anos. Leve um documento oficial com foto.",
   },
   {
     icon: ArrowCounterClockwise,
     q: "Cancelamento e reembolso",
-    a: "Comprou e se arrependeu? Você tem 7 dias corridos a partir da compra para cancelar e receber 100% de volta, incluindo as taxas (Art. 49 do Código de Defesa do Consumidor), desde que o ingresso ainda não tenha sido utilizado. Se o evento for cancelado ou tiver a data ou o local alterados, o reembolso também é integral. O estorno é feito em até 30 dias — para solicitar, fale com a gente pelo WhatsApp. Passados os 7 dias, você ainda pode transferir o ingresso para outra pessoa (logo abaixo).",
+    a: "Comprou e se arrependeu? Você tem 7 dias corridos a partir da compra para cancelar e receber 100% de volta, incluindo as taxas (Art. 49 do Código de Defesa do Consumidor), desde que o ingresso ainda não tenha sido utilizado. Se o evento for cancelado ou tiver a data ou o local alterados, o reembolso também é integral. O estorno é feito em até 30 dias. Para solicitar, fale com a gente pelo WhatsApp. Passados os 7 dias, você ainda pode transferir o ingresso para outra pessoa (logo abaixo).",
   },
   {
     icon: ArrowsLeftRight,
@@ -36,9 +36,9 @@ const FAQ: { icon: Icon; q: string; a: string }[] = [
     a: "Haverá venda no local pelo valor do 3º lote, tanto para a Pista quanto para o VIP, conforme disponibilidade.",
   },
   {
-    icon: WhatsappLogo,
+    icon: EnvelopeSimple,
     q: "Como recebo meu ingresso?",
-    a: "Você recebe na tela após o pagamento, por e-mail e por WhatsApp, com um QR Code para validar na entrada.",
+    a: "Você recebe na tela logo após o pagamento e por e-mail, com um QR Code para validar na entrada.",
   },
   {
     icon: CreditCard,

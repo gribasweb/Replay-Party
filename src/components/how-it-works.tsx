@@ -7,7 +7,7 @@ const STEPS: { icon: Icon; title: string; desc: string }[] = [
   { icon: HandPointing, title: "Escolha seu setor", desc: "Pista ou VIP, no lote disponível." },
   { icon: IdentificationCard, title: "Preencha seus dados", desc: "Nome, CPF e WhatsApp. Rápido." },
   { icon: CreditCard, title: "Pague com Pix ou cartão", desc: "Aprovação na hora, com segurança." },
-  { icon: QrCode, title: "Receba o QR Code", desc: "No e-mail e no WhatsApp. Pronto." },
+  { icon: QrCode, title: "Receba o QR Code", desc: "Direto no seu e-mail. Pronto." },
 ];
 
 export function HowItWorks() {
