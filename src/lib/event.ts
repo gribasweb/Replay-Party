@@ -47,11 +47,10 @@ export const EVENT = {
     mapsQuery: "Rua Oriente, 425 - Chácara da Barra, Campinas - SP, 13090-740",
   },
   social: {
-    // TODO: replace with the real handles/number before launch.
-    instagram: "@replay.party.oficial",
-    instagramUrl: "https://instagram.com/replay.party.oficial",
-    whatsappLabel: "(19) 99999-9999",
-    whatsappUrl: "https://wa.me/5519999999999",
+    instagram: "@replayparty2026",
+    instagramUrl: "https://instagram.com/replayparty2026",
+    whatsappLabel: "(19) 99979-0405",
+    whatsappUrl: "https://wa.me/5519999790405",
   },
 } as const;
 
