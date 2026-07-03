@@ -29,9 +29,9 @@ const spaceMono = Space_Mono({
 export const metadata: Metadata = {
   title: `${EVENT.name} · ${EVENT.dayLabel}.2026 · Campinas`,
   description:
-    "Dois DJs, open bar e a pista mais quente de Campinas. Garanta seu ingresso para a Replay Party no dia 25 de julho. Pista e VIP, com pagamento via Pix e cartão.",
+    "Dois DJs, open bar e a pista mais quente de Campinas. Garanta seu ingresso para a Replay Party no dia 24 de julho. Pista e VIP, com pagamento via Pix e cartão.",
   openGraph: {
-    title: `${EVENT.name} · 25 de julho · Campinas`,
+    title: `${EVENT.name} · 24 de julho · Campinas`,
     description:
       "Dois DJs, open bar e a pista mais quente de Campinas. Pista e VIP, pagamento via Pix e cartão.",
     type: "website",

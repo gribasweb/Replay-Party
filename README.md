@@ -1,6 +1,6 @@
 # Replay Party
 
-Site de venda de ingressos para a festa **Replay Party** (25/07/2026, Campinas-SP).
+Site de venda de ingressos para a festa **Replay Party** (24/07/2026, Campinas-SP).
 Inclui checkout, geração de ingresso com QR Code, check-in na portaria, consulta de
 ingressos e e-mail automático.
 

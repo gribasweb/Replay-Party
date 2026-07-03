@@ -31,9 +31,9 @@ export interface TicketTier {
 export const EVENT = {
   name: "Replay Party",
   // NOTE: confirm the start time with the client. The briefing reads "10:00 às 04:00".
-  dateISO: "2026-07-25",
-  dateLabel: "25 JUL 2026",
-  dayLabel: "25.07",
+  dateISO: "2026-07-24",
+  dateLabel: "24 JUL 2026",
+  dayLabel: "24.07",
   timeLabel: "10:00 às 04:00",
   minAge: 16,
   capacity: 1800,
@@ -65,7 +65,7 @@ export const TICKETS: TicketTier[] = [
     lots: [
       { n: 1, label: "1º Lote", price: 30, window: "até 10/07", endsAt: "2026-07-10T23:59:59-03:00", status: "active" },
       { n: 2, label: "2º Lote", price: 45, window: "11/07 a 20/07", endsAt: "2026-07-20T23:59:59-03:00", status: "upcoming" },
-      { n: 3, label: "3º Lote", price: 60, window: "21/07 até o dia do evento", endsAt: "2026-07-25T23:59:59-03:00", status: "upcoming" },
+      { n: 3, label: "3º Lote", price: 60, window: "21/07 até o dia do evento", endsAt: "2026-07-24T23:59:59-03:00", status: "upcoming" },
     ],
   },
   {
@@ -78,7 +78,7 @@ export const TICKETS: TicketTier[] = [
     lots: [
       { n: 1, label: "1º Lote", price: 80, window: "até 10/07", endsAt: "2026-07-10T23:59:59-03:00", status: "active" },
       { n: 2, label: "2º Lote", price: 95, window: "11/07 a 20/07", endsAt: "2026-07-20T23:59:59-03:00", status: "upcoming" },
-      { n: 3, label: "3º Lote", price: 110, window: "21/07 até o dia do evento", endsAt: "2026-07-25T23:59:59-03:00", status: "upcoming" },
+      { n: 3, label: "3º Lote", price: 110, window: "21/07 até o dia do evento", endsAt: "2026-07-24T23:59:59-03:00", status: "upcoming" },
     ],
   },
 ];
