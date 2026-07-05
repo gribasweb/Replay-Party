@@ -7,7 +7,7 @@ import { EVENT } from "@/lib/event";
 const STATS: { icon: Icon; value: string; label: string }[] = [
   { icon: Users, value: EVENT.capacity.toLocaleString("pt-BR"), label: "Capacidade" },
   { icon: MusicNotes, value: `${EVENT.djCount} DJs`, label: "A noite toda" },
-  { icon: BeerStein, value: "Open Bar", label: "Pista e VIP" },
+  { icon: BeerStein, value: "Open Bar", label: "VIP a noite toda" },
   { icon: ForkKnife, value: "Open Food", label: "Exclusivo VIP" },
 ];
 
