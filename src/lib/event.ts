@@ -64,7 +64,7 @@ export const TICKETS: TicketTier[] = [
     perks: ["Acesso à pista", "Open bar (2h)", "Dois DJs a noite toda"],
     lots: [
       { n: 1, label: "1º Lote", price: 30, window: "até 02/07", endsAt: "2026-07-02T23:59:59-03:00", status: "past" },
-      { n: 2, label: "2º Lote", price: 45, window: "até 20/07", endsAt: "2026-07-20T23:59:59-03:00", status: "active" },
+      { n: 2, label: "2º Lote", price: 40, window: "até 20/07", endsAt: "2026-07-20T23:59:59-03:00", status: "active" },
       { n: 3, label: "3º Lote", price: 60, window: "21/07 até o dia do evento", endsAt: "2026-07-24T23:59:59-03:00", status: "upcoming" },
     ],
   },
@@ -77,7 +77,7 @@ export const TICKETS: TicketTier[] = [
     perks: ["Área VIP exclusiva", "Open bar a noite toda", "Open food", "Dois DJs a noite toda"],
     lots: [
       { n: 1, label: "1º Lote", price: 80, window: "até 02/07", endsAt: "2026-07-02T23:59:59-03:00", status: "past" },
-      { n: 2, label: "2º Lote", price: 95, window: "até 20/07", endsAt: "2026-07-20T23:59:59-03:00", status: "active" },
+      { n: 2, label: "2º Lote", price: 120, window: "até 20/07", endsAt: "2026-07-20T23:59:59-03:00", status: "active" },
       { n: 3, label: "3º Lote", price: 110, window: "21/07 até o dia do evento", endsAt: "2026-07-24T23:59:59-03:00", status: "upcoming" },
     ],
   },
