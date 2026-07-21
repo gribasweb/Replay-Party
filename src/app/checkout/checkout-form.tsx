@@ -26,7 +26,7 @@ interface AppliedCoupon {
   vipPriceCents: number;
 }
 
-const MAX_QTY = 10;
+const MAX_QTY = 20;
 const emailOk = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
 export function CheckoutForm({ lot, publicKey }: { lot: LotInfo; publicKey: string }) {

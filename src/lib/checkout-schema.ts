@@ -26,7 +26,7 @@ export const buyerSchema = z.object({
 
 export const cartItemSchema = z.object({
   lotId: z.string().min(1),
-  quantity: z.number().int().min(1).max(10),
+  quantity: z.number().int().min(1).max(20),
 });
 
 export const checkoutSchema = z.object({
