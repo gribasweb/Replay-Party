@@ -17,8 +17,8 @@ import { Reveal } from "@/components/reveal";
 const FAQ: { icon: Icon; q: string; a: string }[] = [
   {
     icon: IdentificationCard,
-    q: "Idade mínima: 16 anos",
-    a: "A entrada é permitida a partir de 16 anos. Na portaria, todos recebem uma pulseira de identificação por faixa etária; bebida alcoólica é servida apenas para maiores de 18 anos. Leve um documento oficial com foto.",
+    q: "Idade mínima: 18 anos",
+    a: "A entrada é exclusiva para maiores de 18 anos. Leve um documento oficial com foto para apresentação na portaria.",
   },
   {
     icon: ArrowCounterClockwise,
