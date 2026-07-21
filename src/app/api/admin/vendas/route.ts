@@ -45,7 +45,7 @@ export async function GET(req: Request) {
 
   const orders = (await db.execute(sql`
     select o.id, o.buyer_name, o.buyer_email, o.buyer_whatsapp, o.buyer_cpf,
-           o.total_cents, o.payment_method, o.created_at
+           o.total_cents, o.payment_method, o.coupon_code, o.created_at
     from orders o
     where o.status = 'paid'
     order by o.created_at desc
@@ -89,6 +89,7 @@ export async function GET(req: Request) {
       cpfMasked: maskCpf(String(o.buyer_cpf)),
       totalCents: num(o.total_cents),
       method: String(o.payment_method ?? ""),
+      couponCode: String(o.coupon_code ?? ""),
       createdAt: o.created_at,
       participants: byOrder.get(String(o.id)) ?? [],
     })),

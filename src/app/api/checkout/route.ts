@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { and, eq, gt, inArray, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { lots, orders, tickets } from "@/lib/db/schema";
+import { coupons, lots, orders, tickets } from "@/lib/db/schema";
 import { checkoutSchema } from "@/lib/checkout-schema";
+import { couponPriceCents } from "@/lib/coupons";
 import { clientKey, rateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
       { status: 400 },
     );
   }
-  const { items, buyer, participants } = parsed.data;
+  const { items, buyer, participants, couponCode } = parsed.data;
 
   const totalQty = items.reduce((sum, i) => sum + i.quantity, 0);
   if (participants.length !== totalQty) {
@@ -48,6 +49,13 @@ export async function POST(req: Request) {
     if (!lotMap.has(item.lotId)) {
       return NextResponse.json({ error: "Ingresso indisponível." }, { status: 400 });
     }
+  }
+
+  const [coupon] = couponCode
+    ? await db.select().from(coupons).where(and(eq(coupons.code, couponCode), eq(coupons.active, true)))
+    : [];
+  if (couponCode && !coupon) {
+    return NextResponse.json({ error: "Esse cupom não está mais disponível." }, { status: 400 });
   }
 
   // Só o lote dentro da janela de datas pode ser comprado (impede comprar um
@@ -67,7 +75,9 @@ export async function POST(req: Request) {
   const slots = items.flatMap((item) =>
     Array.from({ length: item.quantity }, () => lotMap.get(item.lotId)!),
   );
-  const totalCents = slots.reduce((sum, lot) => sum + lot.priceCents, 0);
+  const priceForLot = (lot: (typeof lotRows)[number]) =>
+    coupon ? couponPriceCents(coupon, lot.tier) : lot.priceCents;
+  const totalCents = slots.reduce((sum, lot) => sum + priceForLot(lot), 0);
 
   try {
     const orderId = await db.transaction(async (tx) => {
@@ -113,6 +123,7 @@ export async function POST(req: Request) {
           buyerEmail: buyer.email,
           buyerWhatsapp: buyer.whatsapp,
           totalCents,
+          couponCode: coupon?.code,
           status: "pending",
           expiresAt: new Date(Date.now() + 30 * 60 * 1000),
         })
@@ -126,7 +137,7 @@ export async function POST(req: Request) {
           tierName: lot.tierName,
           holderName: participants[i].name,
           holderCpf: participants[i].cpf,
-          priceCents: lot.priceCents,
+          priceCents: priceForLot(lot),
           qrToken: randomUUID(),
         })),
       );

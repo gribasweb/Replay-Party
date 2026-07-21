@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isValidCPF, onlyDigits } from "@/lib/cpf";
+import { isValidCouponCode, normalizeCouponCode } from "@/lib/coupons";
 
 const cpf = z
   .string()
@@ -32,6 +33,12 @@ export const checkoutSchema = z.object({
   items: z.array(cartItemSchema).min(1, "Selecione ao menos um ingresso"),
   buyer: buyerSchema,
   participants: z.array(participantSchema).min(1).max(20),
+  couponCode: z
+    .string()
+    .trim()
+    .transform(normalizeCouponCode)
+    .refine((value) => value.length === 0 || isValidCouponCode(value), "Cupom invÃ¡lido")
+    .optional(),
 });
 
 export type CheckoutInput = z.infer<typeof checkoutSchema>;

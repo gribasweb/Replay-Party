@@ -214,6 +214,7 @@ export default function AdminCadastroPage() {
 
         <div className="mt-10 flex flex-wrap justify-center gap-5 text-sm">
           <Link href="/admin/vendas" className="text-ash hover:text-chalk">Vendas</Link>
+          <Link href="/admin/cupons" className="text-ash hover:text-chalk">Cupons</Link>
           <Link href="/admin/stats" className="text-ash hover:text-chalk">Acessos</Link>
           <Link href="/checkin" className="text-ash hover:text-chalk">Check-in</Link>
         </div>

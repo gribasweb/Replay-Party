@@ -1,4 +1,4 @@
-import { integer, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { boolean, integer, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 export const orderStatus = pgEnum("order_status", ["pending", "paid", "expired", "cancelled"]);
 export const ticketStatus = pgEnum("ticket_status", ["valid", "used", "cancelled"]);
@@ -31,10 +31,22 @@ export const orders = pgTable("orders", {
   status: orderStatus("status").notNull().default("pending"),
   paymentMethod: text("payment_method"), // "pix" | "credit_card" | "debit_card"
   mpPaymentId: text("mp_payment_id"),
+  couponCode: text("coupon_code"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   // Temporary reservation window: while pending and not expired the tickets
   // hold their spot in stock.
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+});
+
+/** Discount codes available to buyers. Usage is intentionally unlimited. */
+export const coupons = pgTable("coupons", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  code: text("code").notNull().unique(),
+  pistaPriceCents: integer("pista_price_cents").notNull(),
+  vipPriceCents: integer("vip_price_cents").notNull(),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 /** One ticket per attendee. Nominal (holder name + CPF) and a unique QR token. */
@@ -84,5 +96,6 @@ export const pageViews = pgTable("page_views", {
 export type Lot = typeof lots.$inferSelect;
 export type Order = typeof orders.$inferSelect;
 export type Ticket = typeof tickets.$inferSelect;
+export type Coupon = typeof coupons.$inferSelect;
 export type MpCredentials = typeof mpCredentials.$inferSelect;
 export type PageView = typeof pageViews.$inferSelect;

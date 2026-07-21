@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Minus, Plus, Ticket, UserCheck } from "@phosphor-icons/react";
+import { ArrowLeft, ArrowRight, Minus, Plus, Ticket, UserCheck, X } from "@phosphor-icons/react";
 import { brl } from "@/lib/event";
 import { formatCPF, formatPhone, isValidCPF, onlyDigits } from "@/lib/cpf";
 import { PaymentBrick } from "@/components/payment-brick";
@@ -20,6 +20,12 @@ interface Person {
   cpf: string;
 }
 
+interface AppliedCoupon {
+  code: string;
+  pistaPriceCents: number;
+  vipPriceCents: number;
+}
+
 const MAX_QTY = 10;
 const emailOk = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
@@ -32,8 +38,55 @@ export function CheckoutForm({ lot, publicKey }: { lot: LotInfo; publicKey: stri
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  const [couponMessage, setCouponMessage] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [paymentTotalCents, setPaymentTotalCents] = useState<number | null>(null);
 
-  const totalCents = lot.priceCents * quantity;
+  const unitPriceCents = appliedCoupon
+    ? lot.tier === "vip"
+      ? appliedCoupon.vipPriceCents
+      : appliedCoupon.pistaPriceCents
+    : lot.priceCents;
+  const totalCents = unitPriceCents * quantity;
+  const shownTotalCents = step === "payment" && paymentTotalCents !== null ? paymentTotalCents : totalCents;
+
+  const applyCoupon = async () => {
+    setCouponMessage("");
+    const code = couponInput.trim();
+    if (!code) {
+      setCouponMessage("Digite o código do cupom.");
+      return;
+    }
+    setCouponLoading(true);
+    try {
+      const res = await fetch("/api/coupon/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setAppliedCoupon(null);
+        setCouponMessage(data.error ?? "Não foi possível validar o cupom.");
+        return;
+      }
+      setAppliedCoupon(data);
+      setCouponInput(data.code);
+      setCouponMessage("");
+    } catch {
+      setCouponMessage("Erro de conexão. Tente novamente.");
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput("");
+    setCouponMessage("");
+  };
 
   const changeQuantity = (next: number) => {
     const q = Math.max(1, Math.min(MAX_QTY, next));
@@ -75,7 +128,12 @@ export function CheckoutForm({ lot, publicKey }: { lot: LotInfo; publicKey: stri
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: [{ lotId: lot.id, quantity }], buyer, participants }),
+        body: JSON.stringify({
+          items: [{ lotId: lot.id, quantity }],
+          buyer,
+          participants,
+          couponCode: appliedCoupon?.code,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -83,6 +141,7 @@ export function CheckoutForm({ lot, publicKey }: { lot: LotInfo; publicKey: stri
         return;
       }
       setOrderId(data.orderId);
+      setPaymentTotalCents(data.totalCents);
       setStep("payment");
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {
@@ -122,7 +181,9 @@ export function CheckoutForm({ lot, publicKey }: { lot: LotInfo; publicKey: stri
                 <div className="font-display text-2xl leading-none text-chalk uppercase">
                   {quantity}x {lot.tierName}
                 </div>
-                <div className="font-mono text-[11px] tracking-wider text-ash uppercase">{lot.label} · {brl(lot.priceCents / 100)} cada</div>
+                <div className="font-mono text-[11px] tracking-wider text-ash uppercase">
+                  {lot.label} · {brl(unitPriceCents / 100)} cada{appliedCoupon && " com cupom"}
+                </div>
               </div>
             </div>
             {step === "form" && (
@@ -139,12 +200,60 @@ export function CheckoutForm({ lot, publicKey }: { lot: LotInfo; publicKey: stri
           </div>
           <div className="mt-4 flex items-center justify-between border-t border-grape/50 pt-4">
             <span className="text-ash">Total</span>
-            <span className="font-display text-3xl text-chalk">{brl(totalCents / 100)}</span>
+            <span className="font-display text-3xl text-chalk">{brl(shownTotalCents / 100)}</span>
           </div>
         </section>
 
         {step === "form" ? (
           <>
+            <section className="mt-8 border border-grape/60 bg-coal p-4" style={{ borderRadius: "var(--radius-stamp)" }}>
+              <div className="flex flex-wrap items-end gap-3">
+                <label className="min-w-[12rem] flex-1">
+                  <span className="mb-1.5 block font-mono text-[11px] tracking-widest text-ash uppercase">Cupom</span>
+                  <input
+                    value={couponInput}
+                    onChange={(e) => {
+                      setCouponInput(e.target.value.toUpperCase());
+                      if (appliedCoupon) setAppliedCoupon(null);
+                      setCouponMessage("");
+                    }}
+                    placeholder="Código do cupom"
+                    maxLength={40}
+                    className="w-full border border-grape bg-ink px-4 py-3 font-mono text-sm uppercase text-chalk placeholder:text-ash/40 focus:border-magenta focus:outline-none"
+                    style={{ borderRadius: "var(--radius-stamp)" }}
+                  />
+                </label>
+                {appliedCoupon ? (
+                  <button
+                    type="button"
+                    onClick={removeCoupon}
+                    aria-label="Remover cupom"
+                    title="Remover cupom"
+                    className="grid h-11 w-11 place-items-center border border-grape text-ash hover:border-magenta hover:text-chalk"
+                    style={{ borderRadius: "var(--radius-stamp)" }}
+                  >
+                    <X weight="bold" className="h-5 w-5" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={applyCoupon}
+                    disabled={couponLoading}
+                    className="h-11 bg-violet px-5 text-xs font-bold tracking-wide text-ink uppercase disabled:opacity-60"
+                    style={{ borderRadius: "var(--radius-stamp)" }}
+                  >
+                    {couponLoading ? "Validando..." : "Aplicar"}
+                  </button>
+                )}
+              </div>
+              {appliedCoupon && (
+                <p className="mt-3 text-xs text-violet">
+                  Cupom {appliedCoupon.code} aplicado. {lot.tierName} por {brl(unitPriceCents / 100)}.
+                </p>
+              )}
+              {couponMessage && <p className="mt-3 text-xs text-magenta">{couponMessage}</p>}
+            </section>
+
             {/* Comprador = Ingresso 1 */}
             <section className="mt-8">
               <h2 className="font-mono text-xs tracking-widest text-violet uppercase">Seus dados</h2>
@@ -206,7 +315,7 @@ export function CheckoutForm({ lot, publicKey }: { lot: LotInfo; publicKey: stri
           </>
         ) : (
           <section className="mt-8">
-            <PaymentBrick orderId={orderId} amount={totalCents / 100} email={buyer.email} publicKey={publicKey} />
+            <PaymentBrick orderId={orderId} amount={shownTotalCents / 100} email={buyer.email} publicKey={publicKey} />
             <button
               type="button"
               onClick={() => setStep("form")}

@@ -19,6 +19,7 @@ interface Order {
   cpfMasked: string;
   totalCents: number;
   method: string;
+  couponCode: string;
   createdAt: string;
   participants: Participant[];
 }
@@ -253,6 +254,11 @@ export default function AdminVendasPage() {
                     >
                       {METHOD[o.method] ?? o.method}
                     </span>
+                    {o.couponCode && (
+                      <span className="mt-1 block font-mono text-[10px] tracking-widest text-violet uppercase">
+                        Cupom {o.couponCode}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -284,6 +290,7 @@ export default function AdminVendasPage() {
         </div>
 
         <div className="mt-10 flex justify-center gap-5 text-sm">
+          <Link href="/admin/cupons" className="text-ash hover:text-chalk">Cupons</Link>
           <Link href="/admin/stats" className="text-ash hover:text-chalk">Acessos</Link>
           <Link href="/checkin" className="text-ash hover:text-chalk">Check-in</Link>
           <Link href="/admin/mp" className="text-ash hover:text-chalk">Mercado Pago</Link>

@@ -32,12 +32,14 @@ const ddl = [
      status order_status NOT NULL DEFAULT 'pending',
      payment_method text,
      mp_payment_id text,
+     coupon_code text,
      created_at timestamptz NOT NULL DEFAULT now(),
      expires_at timestamptz NOT NULL
    );`,
   // Idempotente: garante as colunas de pagamento mesmo em bancos criados antes.
   `ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method text;`,
   `ALTER TABLE orders ADD COLUMN IF NOT EXISTS mp_payment_id text;`,
+  `ALTER TABLE orders ADD COLUMN IF NOT EXISTS coupon_code text;`,
   `CREATE TABLE IF NOT EXISTS tickets (
      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
      order_id uuid NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
@@ -54,6 +56,16 @@ const ddl = [
   `CREATE INDEX IF NOT EXISTS idx_tickets_order ON tickets(order_id);`,
   `CREATE INDEX IF NOT EXISTS idx_tickets_lot ON tickets(lot_id);`,
   `CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);`,
+  `CREATE INDEX IF NOT EXISTS idx_orders_coupon_code ON orders(coupon_code) WHERE coupon_code IS NOT NULL;`,
+  `CREATE TABLE IF NOT EXISTS coupons (
+     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+     code text NOT NULL UNIQUE,
+     pista_price_cents integer NOT NULL,
+     vip_price_cents integer NOT NULL,
+     active boolean NOT NULL DEFAULT true,
+     created_at timestamptz NOT NULL DEFAULT now(),
+     updated_at timestamptz NOT NULL DEFAULT now()
+   );`,
   `CREATE TABLE IF NOT EXISTS mp_credentials (
      id text PRIMARY KEY,
      mp_user_id text,
@@ -84,6 +96,8 @@ const LOTS = [
   ["vip-3", "vip", "VIP", 3, "3º Lote", 12000, 250, "2026-07-16T00:00:00-03:00", "2026-07-24T23:59:59-03:00"],
 ];
 
+const COUPONS = [["RPDJ7K9M24", 3000, 7500]];
+
 try {
   for (const stmt of ddl) await sql.unsafe(stmt);
   console.log("Tabelas e indices: OK");
@@ -101,6 +115,15 @@ try {
     `;
   }
   console.log("Seed dos lotes: OK");
+
+  for (const [code, pistaPrice, vipPrice] of COUPONS) {
+    await sql`
+      insert into coupons (code, pista_price_cents, vip_price_cents)
+      values (${code}, ${pistaPrice}, ${vipPrice})
+      on conflict (code) do nothing
+    `;
+  }
+  console.log("Seed dos cupons: OK");
 
   const rows = await sql`select id, label, price_cents, qty_total from lots order by tier, lot_number`;
   console.log("\nLotes no banco:");
